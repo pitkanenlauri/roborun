@@ -5,7 +5,6 @@ import os
 #===============================================================================
 # TODO:
 # - Remove multi jump.
-# - Place images in game asset directory.
 # - Acceleration to max speed when starting to move?
 # - Encapsulate game initialization?
 # - Add enemies
