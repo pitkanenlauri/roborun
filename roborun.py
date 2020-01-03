@@ -4,7 +4,6 @@ import os
 
 #===============================================================================
 # TODO:
-# - Remove multi jump.
 # - Acceleration to max speed when starting to move?
 # - Encapsulate game initialization?
 # - Add enemies
@@ -65,6 +64,7 @@ class Robot(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 200
         self.jump_speed = 500
+        self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
         self.frame = 0
@@ -81,10 +81,12 @@ class Robot(pygame.sprite.Sprite):
         if self.rect.y >= ground and self.velocity_y >= 0:
             self.velocity_y = 0
             self.rect.y = ground
+            self.jumping = False
         else:
-            self.velocity_y += int(g * dt)
+            self.velocity_y += g * dt
             
     def jump(self):
+        self.jumping = True
         self.velocity_y -= self.jump_speed
     
     def update(self, dt, left, right):
@@ -145,7 +147,8 @@ def main():
                 return pygame.quit()
             # Initiate jump on releasing space key.
             elif event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
-                player.jump()
+                if not player.jumping:
+                    player.jump()
                 
         keys = pygame.key.get_pressed()
                  
