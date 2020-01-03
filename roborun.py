@@ -1,14 +1,14 @@
 import pygame
 import traceback
 import os
+import platform
 
 #===============================================================================
 # TODO:
-# - Acceleration to max speed when starting to move?
-# - Encapsulate game initialization?
+# - When colliding platform from below -> player teleports to top.
+#    => Fix or prevent jumping through platforms?
 # - Add enemies
 # - Shoot fireballs?
-# - Add platforms.
 # - Ladders.
 # - Platform collisions.
 # - Optimize g, player.speed, player.jumps_speed for platforms
@@ -28,14 +28,16 @@ FPS = 60
 g = 1500
 # Cap for delta time.
 max_dt = 1 / 30
-# Set ground level. (to be removed when checking ground from platform top)
-ground = 500 - 32
+# Set ground level where player falls without platform.
+GROUND = 500 - 32
 
 # Variables for animation.
 animation_cycles = 10
 animation_speed = 6
 left = False
 right = False
+tile_x = 32
+tile_y = 32
 
 # Game window.
 WIDTH = 1000
@@ -57,18 +59,20 @@ pygame.display.set_icon(pygame.image.load(os.path.join
 
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
+all_platforms = pygame.sprite.Group()
 
 class Robot(pygame.sprite.Sprite):
     
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 200
-        self.jump_speed = 500
+        self.jump_speed = 700
         self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
         self.frame = 0
         self.images = []
+        self.ground = HEIGHT - 32
         
         for i in range(1,22):
             img = pygame.image.load(os.path.join
@@ -78,9 +82,10 @@ class Robot(pygame.sprite.Sprite):
         self.rect  = self.image.get_rect()
     
     def gravity(self, dt):
-        if self.rect.y >= ground and self.velocity_y >= 0:
+        if self.rect.y >= self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
-            self.rect.y = ground
+            self.rect.y = self.ground
+            # Jump possible only from "solid ground".
             self.jumping = False
         else:
             self.velocity_y += g * dt
@@ -93,10 +98,17 @@ class Robot(pygame.sprite.Sprite):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
+        # Set correct value for ground if player is on top of platform.
+        colliding_platform = pygame.sprite.spritecollideany(self, all_platforms)
+        if colliding_platform is None:
+            self.ground = GROUND
+        else:
+            self.ground = colliding_platform.rect.y - tile_y + 1
+        
         # Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
-            self.rect.x = -32
-        elif self.rect.x < -32:
+            self.rect.x = - tile_x
+        elif self.rect.x < - tile_x:
             self.rect.x = WIDTH
         
         if left:
@@ -111,7 +123,27 @@ class Robot(pygame.sprite.Sprite):
             self.frame += 1
         else:
             self.image = self.images[20]
+
+class Platfrom(pygame.sprite.Sprite):
     
+    def __init__(self, x_location, y_location):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join(assets,'tile.png')).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.x = x_location
+        self.rect.y = y_location
+
+# x and y for where platform starts and width times height = amount of tiles used.
+def create_platform(x, y, plat_width, plat_height):
+    i = 0
+    while i < plat_height:
+        j = 0
+        while j < plat_width:
+            platform = Platfrom(x + j * tile_x, y + i * tile_x)
+            all_platforms.add(platform)
+            j += 1
+        i += 1
+        
 def update_window(dt, left, right):
     window.fill(SKY_BLUE)
     
@@ -122,6 +154,7 @@ def update_window(dt, left, right):
     # This uses the Sprite.image attribute for the source surface, 
     # and Sprite.rect for the position.
     all_sprites.draw(window)
+    all_platforms.draw(window)
 
     pygame.display.flip()
 
@@ -131,6 +164,10 @@ def main():
     player.rect.x = 0
     player.rect.y = 0
     all_sprites.add(player)
+    
+    create_platform(0, HEIGHT - 2 * tile_y, 10, 1)
+    
+    create_platform(12 * tile_x, HEIGHT - 5 * tile_y, 10, 1)
     
     # Game loop.
     while True:
