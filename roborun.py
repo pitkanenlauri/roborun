@@ -1,7 +1,6 @@
 import pygame
 import traceback
 import os
-import platform
 
 #===============================================================================
 # TODO:
