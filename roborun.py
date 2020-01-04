@@ -6,7 +6,7 @@ import os
 # TODO:
 # - When colliding platform from below -> player teleports to top.
 #    => Fix or prevent jumping through platforms?
-# - Add enemies
+# - Monsters moving on platforms?
 # - Shoot fireballs?
 # - Ladders.
 # - Platform collisions.
@@ -27,14 +27,10 @@ FPS = 60
 g = 1500
 # Cap for delta time.
 max_dt = 1 / 30
-# Set ground level where player falls without platform.
-GROUND = 500 - 32
 
 # Variables for animation.
 animation_cycles = 10
 animation_speed = 6
-left = False
-right = False
 tile_x = 32
 tile_y = 32
 
@@ -42,6 +38,9 @@ tile_y = 32
 WIDTH = 1000
 HEIGHT = 500
 window_size = [WIDTH, HEIGHT]
+
+# Set ground level where player falls without platform.
+GROUND = HEIGHT - tile_y
 
 # Initialize PyGame and create game window.
 pygame.init()
@@ -69,10 +68,13 @@ class Robot(pygame.sprite.Sprite):
         self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
+        self.left = False
+        self.right = False
         self.frame = 0
         self.images = []
-        self.ground = HEIGHT - 32
+        self.ground = GROUND
         
+        # Load all the images for player movement animation.
         for i in range(1,22):
             img = pygame.image.load(os.path.join
                                     (assets, 'robo' + str(i) + '.png')).convert_alpha()
@@ -91,12 +93,11 @@ class Robot(pygame.sprite.Sprite):
             # Prevent jumping when falling.
             self.jumping = True
             
-            
     def jump(self):
         self.jumping = True
         self.velocity_y -= self.jump_speed
     
-    def update(self, dt, left, right):
+    def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
@@ -113,12 +114,12 @@ class Robot(pygame.sprite.Sprite):
         elif self.rect.x < - tile_x:
             self.rect.x = WIDTH
         
-        if left:
+        if self.left:
             if self.frame >= animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed]
             self.frame += 1
-        elif right:
+        elif self.right:
             if self.frame >= animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed + 10]
@@ -126,6 +127,47 @@ class Robot(pygame.sprite.Sprite):
         else:
             self.image = self.images[20]
 
+class Monster(pygame.sprite.Sprite):
+    
+    def __init__(self, x_location, y_location):
+        pygame.sprite.Sprite.__init__(self)
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.frame = 0
+        self.images = []
+        for i in range(0,11):
+            img = pygame.image.load(os.path.join
+                                    (assets, 'monster' + str(i) + '.png')).convert_alpha()
+            self.images.append(img)
+        self.image = self.images[0]
+        self.rect  = self.image.get_rect()
+        self.rect.x = x_location
+        self.rect.y = y_location
+    
+    def update(self, dt):
+        self.rect.x += int(self.velocity_x * dt)
+        self.rect.y += int(self.velocity_y * dt)
+        
+        # Looping movement to other side of the window when reaching border.
+        if self.rect.x > WIDTH:
+            self.rect.x = - tile_x
+        elif self.rect.x < - tile_x:
+            self.rect.x = WIDTH
+        
+        # Animating movement.
+        if self.velocity_x < 0:
+            if self.frame >= 5 * animation_speed:
+                self.frame = 0
+            self.image = self.images[self.frame//animation_speed]
+            self.frame += 1
+        elif self.velocity_x > 0:
+            if self.frame >= 5 * animation_speed:
+                self.frame = 0
+            self.image = self.images[self.frame//animation_speed + 5]
+            self.frame += 1
+        else:
+            self.image = self.images[10]
+        
 class Platfrom(pygame.sprite.Sprite):
     
     def __init__(self, x_location, y_location):
@@ -135,22 +177,22 @@ class Platfrom(pygame.sprite.Sprite):
         self.rect.x = x_location
         self.rect.y = y_location
 
-# x and y for where platform starts and width times height = amount of tiles used.
-def create_platform(x, y, plat_width, plat_height):
+# x_start and y_start for where platform starts and width times height = amount of tiles used.
+def create_platform(x_start, y_start, plat_width, plat_height):
     i = 0
     while i < plat_height:
         j = 0
         while j < plat_width:
-            platform = Platfrom(x + j * tile_x, y + i * tile_x)
+            platform = Platfrom(x_start + j * tile_x, y_start + i * tile_y)
             all_platforms.add(platform)
             j += 1
         i += 1
         
-def update_window(dt, left, right):
+def update_window(dt):
     window.fill(SKY_BLUE)
     
     # Calls the update() method on all Sprites in the Group.
-    all_sprites.update(dt, left, right)
+    all_sprites.update(dt)
     
     # Draws the contained Sprites to the Surface argument. 
     # This uses the Sprite.image attribute for the source surface, 
@@ -167,8 +209,18 @@ def main():
     player.rect.y = 0
     all_sprites.add(player)
     
-    # Platforms for testing.
-    create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 2)
+    # Testing monsters.
+    monster = Monster(0, HEIGHT - tile_y)
+    monster.velocity_x = 150
+    all_sprites.add(monster)
+    monster2 = Monster(WIDTH - tile_x, HEIGHT - tile_y)
+    monster2.velocity_x = -150
+    all_sprites.add(monster2)
+    monster3 = Monster(4 * tile_x, HEIGHT - 13 * tile_y)
+    all_sprites.add(monster3)
+    
+    # Testing platforms.
+    create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
     create_platform(12 * tile_x, HEIGHT - 5 * tile_y, 5, 1)
     create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
     create_platform(3 * tile_x, HEIGHT - 12 * tile_y, 4, 2)
@@ -197,15 +249,15 @@ def main():
                  
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             player.rect.x -= int(player.speed * dt)
-            left = True
-            right = False
+            player.left = True
+            player.right = False
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             player.rect.x += int(player.speed * dt)
-            right = True
-            left = False
+            player.right = True
+            player.left = False
         else:
-            left = False
-            right = False
+            player.left = False
+            player.right = False
 
 # For ladders. Check if colliding ladder sprite to work?
 #         elif keys[pygame.K_UP] or keys[pygame.K_w]:
@@ -216,7 +268,7 @@ def main():
 #             print('Down!')
         
         player.gravity(dt)
-        update_window(dt, left, right)
+        update_window(dt)
 
 if __name__ == "__main__":
     try:
