@@ -88,6 +88,7 @@ class Robot(pygame.sprite.Sprite):
             self.jumping = False
         else:
             self.velocity_y += g * dt
+            # Prevent jumping when falling.
             self.jumping = True
             
             
@@ -103,7 +104,7 @@ class Robot(pygame.sprite.Sprite):
         colliding_platform = pygame.sprite.spritecollideany(self, all_platforms)
         if colliding_platform is None:
             self.ground = GROUND
-        elif self.rect.y <= colliding_platform.rect.y + tile_y - 1:
+        else:
             self.ground = colliding_platform.rect.y - tile_y + 1
         
         # Looping movement to other side of the window when reaching border.
@@ -166,11 +167,13 @@ def main():
     player.rect.y = 0
     all_sprites.add(player)
     
-    create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
+    # Platforms for testing.
+    create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 2)
     create_platform(12 * tile_x, HEIGHT - 5 * tile_y, 5, 1)
-    create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 5, 1)
-    create_platform(5 * tile_x, HEIGHT - 12 * tile_y, 6, 2)
-    create_platform(16 * tile_x, HEIGHT - 11 * tile_y, 1, 1)
+    create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
+    create_platform(3 * tile_x, HEIGHT - 12 * tile_y, 4, 2)
+    create_platform(18 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
+    create_platform(12 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
     
     # Game loop.
     while True:
