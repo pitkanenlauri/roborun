@@ -227,7 +227,7 @@ def main():
                     player.jump()
                 
         keys = pygame.key.get_pressed()
-                 
+                  
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             player.rect.x -= int(player.speed * dt)
             player.left = True
