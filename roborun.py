@@ -7,13 +7,11 @@ import os
 # - When colliding platform from below -> player teleports to top.
 #    => Fix or prevent jumping through platforms?
 # - Monsters moving on platforms?
-# - Shoot fireballs?
-# - Ladders.
-# - Platform collisions.
-# - Optimize g, player.speed, player.jumps_speed for platforms
+# - Player shoot fireballs?
+# - Ladders?
+# - Optimize g, player.speed, player.jumps_speed for platforms.
 #===============================================================================
 
-# Colors.
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -21,44 +19,22 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
-# Target screen refresh rate.
-FPS = 60
-# Gravitational acceleration.
-g = 1500
-# Cap for delta time.
-max_dt = 1 / 30
-
-# Variables for animation.
-animation_cycles = 10
+FPS = 60 # Target screen refresh rate.
+max_dt = 1 / 30 # Cap for delta time.
 animation_speed = 6
 tile_x = 32
 tile_y = 32
+g = 1500 # Gravitational acceleration.
 
 # Game window.
-WIDTH = 1000
-HEIGHT = 500
+WIDTH = 960
+HEIGHT = 540
 window_size = [WIDTH, HEIGHT]
 
 # Set ground level where player falls without platform.
 GROUND = HEIGHT - tile_y
 
-# Initialize PyGame and create game window.
-pygame.init()
-pygame.display.set_caption("Roborun")
-window = pygame.display.set_mode(window_size)
-
-# Set path to game assets dir.
-game_dir = os.path.dirname(__file__)
-assets = os.path.join(game_dir, 'assets')
-
-# Set window icon.
-pygame.display.set_icon(pygame.image.load(os.path.join
-                                          (assets, 'robo12.png')).convert_alpha())
-
-clock = pygame.time.Clock()
-all_sprites = pygame.sprite.Group()
-all_platforms = pygame.sprite.Group()
-
+# Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
     
     def __init__(self):
@@ -68,17 +44,19 @@ class Robot(pygame.sprite.Sprite):
         self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
+        self.ground = GROUND
         self.left = False
         self.right = False
+        self.animation_cycles = 10
         self.frame = 0
         self.images = []
-        self.ground = GROUND
         
         # Load all the images for player movement animation.
         for i in range(1,22):
             img = pygame.image.load(os.path.join
                                     (assets, 'robo' + str(i) + '.png')).convert_alpha()
             self.images.append(img)
+        
         self.image = self.images[0]
         self.rect  = self.image.get_rect()
     
@@ -86,7 +64,7 @@ class Robot(pygame.sprite.Sprite):
         if self.rect.y >= self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
             self.rect.y = self.ground
-            # Jump possible only from "solid ground".
+            # Jump possible only from when on ground.
             self.jumping = False
         else:
             self.velocity_y += g * dt
@@ -94,15 +72,15 @@ class Robot(pygame.sprite.Sprite):
             self.jumping = True
             
     def jump(self):
-        self.jumping = True
         self.velocity_y -= self.jump_speed
+        self.jumping = True
     
     def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
         # Set correct value for ground if player is on top of platform.
-        colliding_platform = pygame.sprite.spritecollideany(self, all_platforms)
+        colliding_platform = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_platform is None:
             self.ground = GROUND
         else:
@@ -114,19 +92,21 @@ class Robot(pygame.sprite.Sprite):
         elif self.rect.x < - tile_x:
             self.rect.x = WIDTH
         
+        # Animating player movement.
         if self.left:
-            if self.frame >= animation_cycles * animation_speed:
+            if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed]
             self.frame += 1
         elif self.right:
-            if self.frame >= animation_cycles * animation_speed:
+            if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed + 10]
+            self.image = self.images[self.frame//animation_speed + self.animation_cycles]
             self.frame += 1
         else:
             self.image = self.images[20]
 
+# Simple monster class.
 class Monster(pygame.sprite.Sprite):
     
     def __init__(self, x_location, y_location):
@@ -135,6 +115,7 @@ class Monster(pygame.sprite.Sprite):
         self.velocity_y = 0
         self.frame = 0
         self.images = []
+        self.animation_cycles = 5
         for i in range(0,11):
             img = pygame.image.load(os.path.join
                                     (assets, 'monster' + str(i) + '.png')).convert_alpha()
@@ -156,19 +137,19 @@ class Monster(pygame.sprite.Sprite):
         
         # Animating movement.
         if self.velocity_x < 0:
-            if self.frame >= 5 * animation_speed:
+            if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed]
             self.frame += 1
         elif self.velocity_x > 0:
-            if self.frame >= 5 * animation_speed:
+            if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed + 5]
             self.frame += 1
         else:
             self.image = self.images[10]
         
-class Platfrom(pygame.sprite.Sprite):
+class Tile(pygame.sprite.Sprite):
     
     def __init__(self, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
@@ -183,8 +164,8 @@ def create_platform(x_start, y_start, plat_width, plat_height):
     while i < plat_height:
         j = 0
         while j < plat_width:
-            platform = Platfrom(x_start + j * tile_x, y_start + i * tile_y)
-            all_platforms.add(platform)
+            platform_part = Tile(x_start + j * tile_x, y_start + i * tile_y)
+            all_tiles.add(platform_part)
             j += 1
         i += 1
         
@@ -198,12 +179,11 @@ def update_window(dt):
     # This uses the Sprite.image attribute for the source surface, 
     # and Sprite.rect for the position.
     all_sprites.draw(window)
-    all_platforms.draw(window)
+    all_tiles.draw(window)
 
     pygame.display.flip()
 
 def main():
-    
     player = Robot()
     player.rect.x = 0
     player.rect.y = 0
@@ -225,7 +205,8 @@ def main():
     create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
     create_platform(3 * tile_x, HEIGHT - 12 * tile_y, 4, 2)
     create_platform(18 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
-    create_platform(12 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
+    create_platform(12 * tile_x, HEIGHT - 11 * tile_y, 1, 1)
+    create_platform(27 * tile_x, HEIGHT - 11 * tile_y, 2, 1)
     
     # Game loop.
     while True:
@@ -258,20 +239,31 @@ def main():
         else:
             player.left = False
             player.right = False
-
-# For ladders. Check if colliding ladder sprite to work?
-#         elif keys[pygame.K_UP] or keys[pygame.K_w]:
-#             player.rect.y -= int(player.speed * dt)
-#             print('Up!')
-#         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-#             player.rect.y += int(player.speed * dt)
-#             print('Down!')
-        
+            
         player.gravity(dt)
         update_window(dt)
 
 if __name__ == "__main__":
     try:
+        # Initialize PyGame and create game window.
+        pygame.init()
+        pygame.display.set_caption("Roborun")
+        window = pygame.display.set_mode(window_size)
+        
+        # Set path to game assets dir.
+        game_dir = os.path.dirname(__file__)
+        assets = os.path.join(game_dir, 'assets')
+        
+        # Set window icon.
+        pygame.display.set_icon(pygame.image.load(os.path.join
+                                                  (assets, 'robo12.png')).convert_alpha())
+        
+        # For keeping up time to control screen refresh rate, used in game loop.
+        clock = pygame.time.Clock()
+        
+        all_sprites = pygame.sprite.Group()
+        all_tiles = pygame.sprite.Group()
+        
         main()
     except:
         traceback.print_exc()
