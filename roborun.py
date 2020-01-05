@@ -51,6 +51,12 @@ class Robot(pygame.sprite.Sprite):
         self.frame = 0
         self.images = []
         
+        self.plat_top = HEIGHT
+        self.plat_left_side = None
+        self.plat_right_side = None
+        self.plat_bottom = None
+        self.colliding = False
+        
         # Load all the images for player movement animation.
         for i in range(1,22):
             img = pygame.image.load(os.path.join
@@ -74,17 +80,17 @@ class Robot(pygame.sprite.Sprite):
     def jump(self):
         self.velocity_y -= self.jump_speed
         self.jumping = True
-    
+        
     def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
         # Set correct value for ground if player is on top of platform.
-        colliding_platform = pygame.sprite.spritecollideany(self, all_tiles)
-        if colliding_platform is None:
+        colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+        if colliding_tile is None:
             self.ground = GROUND
         else:
-            self.ground = colliding_platform.rect.y - tile_y + 1
+            self.ground = colliding_tile.rect.y - tile_y + 1
         
         # Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
@@ -201,7 +207,7 @@ def main():
     
     # Testing platforms.
     create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
-    create_platform(12 * tile_x, HEIGHT - 5 * tile_y, 5, 1)
+    create_platform(12 * tile_x, HEIGHT - 3 * tile_y, 5, 1)
     create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
     create_platform(3 * tile_x, HEIGHT - 12 * tile_y, 4, 2)
     create_platform(18 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
@@ -242,7 +248,7 @@ def main():
             
         player.gravity(dt)
         update_window(dt)
-
+        
 if __name__ == "__main__":
     try:
         # Initialize PyGame and create game window.
