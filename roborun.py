@@ -6,10 +6,11 @@ import os
 # TODO:
 # - When colliding platform from below -> player teleports to top.
 #    => Fix or prevent jumping through platforms?
-# - Monsters moving on platforms?
+# - Monsters moving on platforms they are placed on?
 # - Player shoot fireballs?
 # - Ladders?
 # - Optimize g and player.jumps_speed for platforms.
+# - Level class for creating platforms, monsters and other stuff.
 #===============================================================================
 
 BLACK = (0, 0, 0)
@@ -20,7 +21,7 @@ BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
 FPS = 60 # Target screen refresh rate.
-max_dt = 1 / 30 # Cap for delta time.
+max_dt = 1 / 20 # Cap for delta time.
 animation_speed = 6
 tile_x = 32
 tile_y = 32
@@ -39,15 +40,15 @@ class Robot(pygame.sprite.Sprite):
     
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.speed = 190
+        self.speed = 200
         self.jump_speed = 700
         self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
         self.ground = GROUND
-        self.animation_cycles = 10
         self.frame = 0
         self.images = []
+        self.animation_cycles = 10
         
         # Load all the images for player movement animation.
         for i in range(1,22):
@@ -77,8 +78,6 @@ class Robot(pygame.sprite.Sprite):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
-        print(int(self.velocity_x * dt))
-        
         # Set correct value for ground if player is on top of platform.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
@@ -91,7 +90,7 @@ class Robot(pygame.sprite.Sprite):
             self.rect.x = - tile_x
         elif self.rect.x < - tile_x:
             self.rect.x = WIDTH
-        
+
         # Animating player movement.
         if self.velocity_x < 0:
             if self.frame >= self.animation_cycles * animation_speed:
@@ -124,7 +123,7 @@ class Monster(pygame.sprite.Sprite):
         self.rect  = self.image.get_rect()
         self.rect.x = x_location
         self.rect.y = y_location
-    
+
     def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
@@ -228,7 +227,7 @@ def main():
                     player.jump()
                 
         keys = pygame.key.get_pressed()
-        
+
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             player.velocity_x = - player.speed
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
@@ -257,6 +256,7 @@ if __name__ == "__main__":
         # For keeping up time to control screen refresh rate, used in game loop.
         clock = pygame.time.Clock()
         
+        # Make groups for handling sprites.
         all_sprites = pygame.sprite.Group()
         all_tiles = pygame.sprite.Group()
         
