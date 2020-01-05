@@ -65,22 +65,13 @@ class Robot(pygame.sprite.Sprite):
         if self.rect.bottom > self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
             self.rect.bottom = self.ground + 1
+            # Prevent jumping when falling.
             self.jumping = False
         else:
             self.velocity_y += g * dt
             # Prevent jumping when falling.
             self.jumping = True
-            
-#         if self.rect.y >= self.ground and self.velocity_y >= 0:
-#             self.velocity_y = 0
-#             self.rect.y = self.ground
-#             # Jump possible only when on ground.
-#             self.jumping = False
-#         else:
-#             self.velocity_y += g * dt
-#             # Prevent jumping when falling.
-#             self.jumping = True
-            
+    
     def jump(self):
         self.velocity_y -= self.jump_speed
         self.jumping = True
@@ -95,33 +86,31 @@ class Robot(pygame.sprite.Sprite):
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
-            
-        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
-            self.rect.top = colliding_tile.rect.bottom + 1
-            self.velocity_y = 0
-            self.ground = GROUND
-            print('paa osuu kattoo')
-        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
+        else:
             self.ground = colliding_tile.rect.top
-            self.velocity_y = 0
-            print('jalat osuu lattiaan')
-            
-        elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
-            self.rect.right = colliding_tile.rect.left
-            self.velocity_x = 0
-            print('tormaan tileen vasemmalta')
-        elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
-            self.rect.left = colliding_tile.rect.right
-            self.velocity_x = 0
-            print('tormaan tileen oikealta')
-        
         
 #         # Set correct value for ground if player is on top of platform.
 #         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
 #         if colliding_tile is None:
+#             self.ground = GROUND            
+#         elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
+#             self.rect.top = colliding_tile.rect.bottom + 1
+#             self.velocity_y = 0
 #             self.ground = GROUND
-#         else:
-#             self.ground = colliding_tile.rect.y - tile_y + 1
+#             print('paa osuu kattoo')
+#         elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
+#             self.ground = colliding_tile.rect.top
+#             self.velocity_y = 0
+#             print('jalat osuu lattiaan')
+#              
+#         elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
+#             self.rect.right = colliding_tile.rect.left
+#             self.velocity_x = 0
+#             print('tormaan tileen vasemmalta')
+#         elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
+#             self.rect.left = colliding_tile.rect.right
+#             self.velocity_x = 0
+#             print('tormaan tileen oikealta')
         
         # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
@@ -274,8 +263,7 @@ def main():
             player.velocity_x = player.speed
         else:
             player.velocity_x = 0
-            
-        #player.gravity(dt)
+
         update_window(dt)
         
 if __name__ == "__main__":
