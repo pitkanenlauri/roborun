@@ -51,12 +51,6 @@ class Robot(pygame.sprite.Sprite):
         self.frame = 0
         self.images = []
         
-        self.plat_top = HEIGHT
-        self.plat_left_side = None
-        self.plat_right_side = None
-        self.plat_bottom = None
-        self.colliding = False
-        
         # Load all the images for player movement animation.
         for i in range(1,22):
             img = pygame.image.load(os.path.join
@@ -80,7 +74,7 @@ class Robot(pygame.sprite.Sprite):
     def jump(self):
         self.velocity_y -= self.jump_speed
         self.jumping = True
-        
+
     def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
