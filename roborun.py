@@ -39,22 +39,20 @@ class Robot(pygame.sprite.Sprite):
     
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.speed = 200
+        self.speed = 190
         self.jump_speed = 700
         self.jumping = False
         self.velocity_x = 0
         self.velocity_y = 0
         self.ground = GROUND
-        self.left = False
-        self.right = False
         self.animation_cycles = 10
         self.frame = 0
         self.images = []
         
         # Load all the images for player movement animation.
         for i in range(1,22):
-            img = pygame.image.load(os.path.join
-                                    (assets, 'robo' + str(i) + '.png')).convert_alpha()
+            img = pygame.image.load(
+                os.path.join(assets, 'robo' + str(i) + '.png')).convert_alpha()
             self.images.append(img)
         
         self.image = self.images[0]
@@ -79,6 +77,8 @@ class Robot(pygame.sprite.Sprite):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
+        print(int(self.velocity_x * dt))
+        
         # Set correct value for ground if player is on top of platform.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
@@ -93,12 +93,12 @@ class Robot(pygame.sprite.Sprite):
             self.rect.x = WIDTH
         
         # Animating player movement.
-        if self.left:
+        if self.velocity_x < 0:
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed]
             self.frame += 1
-        elif self.right:
+        elif self.velocity_x > 0:
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
             self.image = self.images[self.frame//animation_speed + self.animation_cycles]
@@ -117,8 +117,8 @@ class Monster(pygame.sprite.Sprite):
         self.images = []
         self.animation_cycles = 5
         for i in range(0,11):
-            img = pygame.image.load(os.path.join
-                                    (assets, 'monster' + str(i) + '.png')).convert_alpha()
+            img = pygame.image.load(
+                os.path.join(assets, 'monster' + str(i) + '.png')).convert_alpha()
             self.images.append(img)
         self.image = self.images[0]
         self.rect  = self.image.get_rect()
@@ -135,7 +135,7 @@ class Monster(pygame.sprite.Sprite):
         elif self.rect.x < - tile_x:
             self.rect.x = WIDTH
         
-        # Animating movement.
+        # Animating monster movement.
         if self.velocity_x < 0:
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
@@ -144,7 +144,7 @@ class Monster(pygame.sprite.Sprite):
         elif self.velocity_x > 0:
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed + 5]
+            self.image = self.images[self.frame//animation_speed + self.animation_cycles]
             self.frame += 1
         else:
             self.image = self.images[10]
@@ -153,7 +153,8 @@ class Tile(pygame.sprite.Sprite):
     
     def __init__(self, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(os.path.join(assets,'tile.png')).convert_alpha()
+        self.image = pygame.image.load(
+            os.path.join(assets,'tile.png')).convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = x_location
         self.rect.y = y_location
@@ -229,16 +230,11 @@ def main():
         keys = pygame.key.get_pressed()
         
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            player.rect.x -= int(player.speed * dt)
-            player.left = True
-            player.right = False
+            player.velocity_x = - player.speed
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            player.rect.x += int(player.speed * dt)
-            player.right = True
-            player.left = False
+            player.velocity_x = player.speed
         else:
-            player.left = False
-            player.right = False
+            player.velocity_x = 0
             
         player.gravity(dt)
         update_window(dt)
@@ -255,8 +251,8 @@ if __name__ == "__main__":
         assets = os.path.join(game_dir, 'assets')
         
         # Set window icon.
-        pygame.display.set_icon(pygame.image.load(os.path.join
-                                                  (assets, 'robo12.png')).convert_alpha())
+        pygame.display.set_icon(pygame.image.load(
+            os.path.join(assets, 'robo12.png')).convert_alpha())
         
         # For keeping up time to control screen refresh rate, used in game loop.
         clock = pygame.time.Clock()
