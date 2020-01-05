@@ -11,6 +11,8 @@ import os
 # - Ladders?
 # - Optimize g and player.jumps_speed for platforms.
 # - Level class for creating platforms, monsters and other stuff.
+#
+# TEMP keyword to find code used for test purposes - to be removed later.
 #===============================================================================
 
 BLACK = (0, 0, 0)
@@ -63,7 +65,7 @@ class Robot(pygame.sprite.Sprite):
         if self.rect.y >= self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
             self.rect.y = self.ground
-            # Jump possible only from when on ground.
+            # Jump possible only when on ground.
             self.jumping = False
         else:
             self.velocity_y += g * dt
@@ -85,7 +87,7 @@ class Robot(pygame.sprite.Sprite):
         else:
             self.ground = colliding_tile.rect.y - tile_y + 1
         
-        # Looping movement to other side of the window when reaching border.
+        # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
             self.rect.x = - tile_x
         elif self.rect.x < - tile_x:
@@ -128,7 +130,7 @@ class Monster(pygame.sprite.Sprite):
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
-        # Looping movement to other side of the window when reaching border.
+        # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
             self.rect.x = - tile_x
         elif self.rect.x < - tile_x:
@@ -189,7 +191,7 @@ def main():
     player.rect.y = 0
     all_sprites.add(player)
     
-    # Testing monsters.
+    # TEMP Testing monsters.
     monster = Monster(0, HEIGHT - tile_y)
     monster.velocity_x = 150
     all_sprites.add(monster)
@@ -199,7 +201,7 @@ def main():
     monster3 = Monster(4 * tile_x, HEIGHT - 13 * tile_y)
     all_sprites.add(monster3)
     
-    # Testing platforms.
+    # TEMP Testing platforms.
     create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
     create_platform(12 * tile_x, HEIGHT - 3 * tile_y, 5, 1)
     create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
