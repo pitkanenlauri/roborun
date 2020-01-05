@@ -9,7 +9,7 @@ import os
 # - Monsters moving on platforms?
 # - Player shoot fireballs?
 # - Ladders?
-# - Optimize g, player.speed, player.jumps_speed for platforms.
+# - Optimize g and player.jumps_speed for platforms.
 #===============================================================================
 
 BLACK = (0, 0, 0)
