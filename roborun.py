@@ -9,10 +9,10 @@ import os
 # - Monsters moving on platforms they are placed on?
 # - Player shoot fireballs?
 # - Ladders?
-# - Optimize g and player.jumps_speed for platforms.
+# - Optimize g and player.jump_speed for platforms.
 # - Level class for creating platforms, monsters and other stuff.
 #
-# TEMP keyword to find code used for test purposes - to be removed later.
+# TEMP keyword marking code used for test purposes - removed later.
 #===============================================================================
 
 BLACK = (0, 0, 0)
@@ -35,7 +35,7 @@ HEIGHT = 540
 window_size = [WIDTH, HEIGHT]
 
 # Set ground level where player falls without platform.
-GROUND = HEIGHT - tile_y
+GROUND = HEIGHT
 
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
@@ -62,21 +62,32 @@ class Robot(pygame.sprite.Sprite):
         self.rect  = self.image.get_rect()
     
     def gravity(self, dt):
-        if self.rect.y >= self.ground and self.velocity_y >= 0:
+        if self.rect.bottom > self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
-            self.rect.y = self.ground
-            # Jump possible only when on ground.
+            self.rect.bottom = self.ground + 1
             self.jumping = False
         else:
             self.velocity_y += g * dt
             # Prevent jumping when falling.
             self.jumping = True
             
+#         if self.rect.y >= self.ground and self.velocity_y >= 0:
+#             self.velocity_y = 0
+#             self.rect.y = self.ground
+#             # Jump possible only when on ground.
+#             self.jumping = False
+#         else:
+#             self.velocity_y += g * dt
+#             # Prevent jumping when falling.
+#             self.jumping = True
+            
     def jump(self):
         self.velocity_y -= self.jump_speed
         self.jumping = True
 
     def update(self, dt):
+        self.gravity(dt)
+        
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
         
@@ -84,8 +95,33 @@ class Robot(pygame.sprite.Sprite):
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
-        else:
-            self.ground = colliding_tile.rect.y - tile_y + 1
+            
+        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
+            self.rect.top = colliding_tile.rect.bottom + 1
+            self.velocity_y = 0
+            self.ground = GROUND
+            print('paa osuu kattoo')
+        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
+            self.ground = colliding_tile.rect.top
+            self.velocity_y = 0
+            print('jalat osuu lattiaan')
+            
+        elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
+            self.rect.right = colliding_tile.rect.left
+            self.velocity_x = 0
+            print('tormaan tileen vasemmalta')
+        elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
+            self.rect.left = colliding_tile.rect.right
+            self.velocity_x = 0
+            print('tormaan tileen oikealta')
+        
+        
+#         # Set correct value for ground if player is on top of platform.
+#         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+#         if colliding_tile is None:
+#             self.ground = GROUND
+#         else:
+#             self.ground = colliding_tile.rect.y - tile_y + 1
         
         # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
@@ -202,6 +238,8 @@ def main():
     all_sprites.add(monster3)
     
     # TEMP Testing platforms.
+    create_platform(21 * tile_x, HEIGHT - 4 * tile_y, 2, 4)
+    create_platform(12 * tile_x, HEIGHT - 1 * tile_y, 2, 1)
     create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
     create_platform(12 * tile_x, HEIGHT - 3 * tile_y, 5, 1)
     create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
@@ -223,7 +261,7 @@ def main():
             if (event.type == pygame.QUIT or
                 event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 return pygame.quit()
-            # Initiate jump on releasing space key.
+            # Initiate jump on pressing space key.
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if not player.jumping:
                     player.jump()
@@ -237,7 +275,7 @@ def main():
         else:
             player.velocity_x = 0
             
-        player.gravity(dt)
+        #player.gravity(dt)
         update_window(dt)
         
 if __name__ == "__main__":
