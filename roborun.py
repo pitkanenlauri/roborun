@@ -81,36 +81,36 @@ class Robot(pygame.sprite.Sprite):
         
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
-        
+
+#         # Set correct value for ground if player is on top of platform.
+#         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+#         if colliding_tile is None:
+#             self.ground = GROUND
+#         else:
+#             self.ground = colliding_tile.rect.top
+
         # Set correct value for ground if player is on top of platform.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
-        else:
+        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x / 2):
+            self.rect.top = colliding_tile.rect.bottom + 1
+            self.velocity_y = 0
+            self.ground = GROUND
+            print('paa osuu kattoon')
+        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x / 2):
+            self.velocity_y = 0
             self.ground = colliding_tile.rect.top
-        
-#         # Set correct value for ground if player is on top of platform.
-#         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
-#         if colliding_tile is None:
-#             self.ground = GROUND            
-#         elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
-#             self.rect.top = colliding_tile.rect.bottom + 1
-#             self.velocity_y = 0
-#             self.ground = GROUND
-#             print('paa osuu kattoo')
-#         elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) <= tile_x):
-#             self.ground = colliding_tile.rect.top
-#             self.velocity_y = 0
-#             print('jalat osuu lattiaan')
-#              
-#         elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
-#             self.rect.right = colliding_tile.rect.left
-#             self.velocity_x = 0
-#             print('tormaan tileen vasemmalta')
-#         elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
-#             self.rect.left = colliding_tile.rect.right
-#             self.velocity_x = 0
-#             print('tormaan tileen oikealta')
+            print('jalat osuu lattiaan')
+
+        elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
+            self.rect.right = colliding_tile.rect.left
+            self.velocity_x = 0
+            print('tormaan tileen vasemmalta')
+        elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
+            self.rect.left = colliding_tile.rect.right
+            self.velocity_x = 0
+            print('tormaan tileen oikealta')
         
         # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
