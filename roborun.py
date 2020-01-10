@@ -65,9 +65,10 @@ class Robot(pygame.sprite.Sprite):
         if self.rect.bottom > self.ground and self.velocity_y >= 0:
             self.velocity_y = 0
             self.rect.bottom = self.ground + 1
-            # Prevent jumping when falling.
+            # Jumping possible when on ground.
             self.jumping = False
         else:
+            # v = v_0 + a*t
             self.velocity_y += g * dt
             # Prevent jumping when falling.
             self.jumping = True
@@ -79,9 +80,10 @@ class Robot(pygame.sprite.Sprite):
     def update(self, dt):
         self.gravity(dt)
         
+        # x = x_0 + v*t
         self.rect.x += int(self.velocity_x * dt)
         self.rect.y += int(self.velocity_y * dt)
-
+        
 #         # Set correct value for ground if player is on top of platform.
 #         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
 #         if colliding_tile is None:
@@ -93,12 +95,12 @@ class Robot(pygame.sprite.Sprite):
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
-        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x / 2):
+        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x - 10):
             self.rect.top = colliding_tile.rect.bottom + 1
             self.velocity_y = 0
             self.ground = GROUND
             print('paa osuu kattoon')
-        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x / 2):
+        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x - 10):
             self.velocity_y = 0
             self.ground = colliding_tile.rect.top
             print('jalat osuu lattiaan')
