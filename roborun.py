@@ -5,12 +5,11 @@ import os
 #===============================================================================
 # TODO:
 # - Monsters moving on platforms they are placed on?
-# - Player shoot fireballs?
 # - Ladders?
 # - Optimize g and player.jump_speed for platforms.
 # - Level class for creating platforms, monsters and other stuff.
 # - Make separate functions for collide detection to avoid duplicate code if 
-# want to use collision detection also in monster classes?
+#   want to use collision detection also in monster classes???
 #
 # TEMP keyword marking code used for test purposes - removed later.
 #===============================================================================
@@ -28,6 +27,7 @@ animation_speed = 6
 tile_x = 32
 tile_y = 32
 g = 1500 # Gravitational acceleration.
+shoot_count = 3 # Amount of fireballs that can be on air at once.
 
 # Game window.
 WIDTH = 960
@@ -45,6 +45,7 @@ class Robot(pygame.sprite.Sprite):
         self.speed = 200
         self.jump_speed = 700
         self.jumping = False
+        self.shooting_right = True
         self.velocity_x = 0
         self.velocity_y = 0
         self.ground = GROUND
@@ -133,6 +134,61 @@ class Robot(pygame.sprite.Sprite):
         else:
             self.image = self.images[20]
 
+# Fireball projectile class which player can shoot.
+class Fireball(pygame.sprite.Sprite):
+    def __init__(self, velocity_x, x_location, y_location):
+        pygame.sprite.Sprite.__init__(self)
+        self.velocity_x = velocity_x
+        self.lifetime = 100
+        self.frame = 0
+        self.images = []
+        self.animation_cycles = 3
+        for i in range(0,6):
+            img = pygame.image.load(
+                os.path.join(assets, 'fireball' + str(i) + '.png')).convert_alpha()
+            self.images.append(img)
+        self.image = self.images[0]
+        self.rect  = self.image.get_rect()
+        self.rect.x = x_location
+        self.rect.y = y_location
+    
+    def update(self, dt):
+        global shoot_count
+        self.rect.x += int(self.velocity_x * dt)
+        
+        # Fireball hitting Monsters.
+        colliding_monster = pygame.sprite.spritecollideany(self, all_monsters)
+        if colliding_monster is None:
+            self.lifetime -= 1
+        else:
+            colliding_monster.kill()
+            shoot_count += 1
+            self.kill()
+            
+        if self.lifetime == 0:
+            shoot_count += 1
+            self.kill()
+        
+        # Animating fireball movement.
+        if self.velocity_x < 0:
+            if self.frame >= self.animation_cycles * animation_speed:
+                self.frame = 0
+            self.image = self.images[self.frame//animation_speed]
+            self.frame += 1
+        elif self.velocity_x > 0:
+            if self.frame >= self.animation_cycles * animation_speed:
+                self.frame = 0
+            self.image = self.images[self.frame//animation_speed + self.animation_cycles]
+            self.frame += 1
+        else:
+            self.image = self.images[0]
+            
+        # TEMP Looping movement to other side of the window when reaching border.
+        if self.rect.x > WIDTH:
+            self.rect.x = - tile_x
+        elif self.rect.x < - tile_x:
+            self.rect.x = WIDTH
+    
 # Simple monster class.
 class Monster(pygame.sprite.Sprite):
     
@@ -212,6 +268,8 @@ def update_window(dt):
     pygame.display.flip()
 
 def main():
+    global shoot_count
+    
     player = Robot()
     player.rect.x = 0
     player.rect.y = 0
@@ -221,11 +279,14 @@ def main():
     monster = Monster(0, HEIGHT - tile_y)
     monster.velocity_x = 150
     all_sprites.add(monster)
+    all_monsters.add(monster)
     monster2 = Monster(WIDTH - tile_x, HEIGHT - tile_y)
     monster2.velocity_x = -150
     all_sprites.add(monster2)
+    all_monsters.add(monster2)
     monster3 = Monster(4 * tile_x, HEIGHT - 13 * tile_y)
     all_sprites.add(monster3)
+    all_monsters.add(monster3)
     
     # TEMP Testing platforms.
     create_platform(21 * tile_x, HEIGHT - 4 * tile_y, 2, 4)
@@ -255,13 +316,25 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if not player.jumping:
                     player.jump()
+            # Shoot fireballs when pressing right shift.
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RSHIFT:
+                if shoot_count > 0:
+                    shoot_count -= 1
+                    if player.shooting_right:
+                        fireball = Fireball(250, player.rect.x, player.rect.y)
+                        all_sprites.add(fireball)
+                    else:
+                        fireball = Fireball(-250, player.rect.x, player.rect.y)
+                        all_sprites.add(fireball)
                 
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             player.velocity_x = - player.speed
+            player.shooting_right = False
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             player.velocity_x = player.speed
+            player.shooting_right = True
         else:
             player.velocity_x = 0
 
@@ -288,6 +361,8 @@ if __name__ == "__main__":
         # Make groups for handling sprites.
         all_sprites = pygame.sprite.Group()
         all_tiles = pygame.sprite.Group()
+        # All monsters also in all_sprites group, this is for handling monster interaction.
+        all_monsters = pygame.sprite.Group()
         
         main()
     except:
