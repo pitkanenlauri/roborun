@@ -4,8 +4,6 @@ import os
 
 #===============================================================================
 # TODO:
-# - When colliding platform from below -> player teleports to top.
-#    => Fix or prevent jumping through platforms?
 # - Monsters moving on platforms they are placed on?
 # - Player shoot fireballs?
 # - Ladders?
@@ -82,38 +80,28 @@ class Robot(pygame.sprite.Sprite):
         
         # x = x_0 + v*t
         self.rect.x += int(self.velocity_x * dt)
-        self.rect.y += int(self.velocity_y * dt)
-        
-#         # Set correct value for ground if player is on top of platform.
-#         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
-#         if colliding_tile is None:
-#             self.ground = GROUND
-#         else:
-#             self.ground = colliding_tile.rect.top
-
-        # Set correct value for ground if player is on top of platform.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
-        elif self.velocity_y < 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x - 10):
-            self.rect.top = colliding_tile.rect.bottom + 1
-            self.velocity_y = 0
-            self.ground = GROUND
-            print('paa osuu kattoon')
-        elif self.velocity_y > 0 and (abs(self.rect.centerx - colliding_tile.rect.centerx) < tile_x - 10):
-            self.velocity_y = 0
-            self.ground = colliding_tile.rect.top
-            print('jalat osuu lattiaan')
-
-        elif self.velocity_x > 0 and self.ground != colliding_tile.rect.top:
+        elif self.velocity_x > 0  and self.ground != colliding_tile.rect.top:
             self.rect.right = colliding_tile.rect.left
             self.velocity_x = 0
-            print('tormaan tileen vasemmalta')
         elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
             self.rect.left = colliding_tile.rect.right
             self.velocity_x = 0
-            print('tormaan tileen oikealta')
         
+        self.rect.y += int(self.velocity_y * dt)
+        colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+        if colliding_tile is None:
+            self.ground = GROUND
+        elif self.velocity_y < 0:
+            self.rect.top = colliding_tile.rect.bottom
+            self.velocity_y = 0
+            self.ground = GROUND
+        elif self.velocity_y > 0:
+            self.velocity_y = 0
+            self.ground = colliding_tile.rect.top
+
         # TEMP Looping movement to other side of the window when reaching border.
         if self.rect.x > WIDTH:
             self.rect.x = - tile_x
