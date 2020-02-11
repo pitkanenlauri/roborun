@@ -8,14 +8,18 @@ import os
 # - Ladders?
 # - Optimize g and player.jump_speed for platforms.
 # - Level class for creating platforms, monsters and other stuff.
-# - Make separate functions for collide detection to avoid duplicate code if 
+# - Is there need to make separate functions for collide detection to avoid duplicate code if 
 #   want to use collision detection also in monster classes???
+# - Dividing code into separate files for clarity.
+# - Sound effects!
+# - Camera system for moving backround.
 #
 # TEMP keyword marking code used for test purposes - removed later.
 #===============================================================================
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREY = (32, 32, 32)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
@@ -27,7 +31,7 @@ animation_speed = 6
 tile_x = 32
 tile_y = 32
 g = 1500 # Gravitational acceleration.
-shoot_count = 3 # Amount of fireballs that can be on air at once.
+shoot_count = 10 # Amount of fireballs that can be on air at once.
 
 # Game window.
 WIDTH = 960
@@ -139,7 +143,7 @@ class Fireball(pygame.sprite.Sprite):
     def __init__(self, velocity_x, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
         self.velocity_x = velocity_x
-        self.lifetime = 100
+        self.lifetime = 100 # How long fireball stays in the air.
         self.frame = 0
         self.images = []
         self.animation_cycles = 3
@@ -156,7 +160,7 @@ class Fireball(pygame.sprite.Sprite):
         global shoot_count
         self.rect.x += int(self.velocity_x * dt)
         
-        # Fireball hitting Monsters.
+        # Check if fireball hits monsters.
         colliding_monster = pygame.sprite.spritecollideany(self, all_monsters)
         if colliding_monster is None:
             self.lifetime -= 1
@@ -254,7 +258,7 @@ def create_platform(x_start, y_start, plat_width, plat_height):
         i += 1
         
 def update_window(dt):
-    window.fill(SKY_BLUE)
+    window.fill(GREY)
     
     # Calls the update() method on all Sprites in the Group.
     all_sprites.update(dt)
@@ -270,6 +274,7 @@ def update_window(dt):
 def main():
     global shoot_count
     
+    # Hero awakens!
     player = Robot()
     player.rect.x = 0
     player.rect.y = 0
