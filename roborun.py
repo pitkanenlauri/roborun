@@ -4,17 +4,14 @@ import os
 
 #===============================================================================
 # TODO:
-# - Monsters moving on platforms they are placed on?
 # - Ladders?
 # - Optimize g and player.jump_speed for platforms.
-# - Level class for creating platforms, monsters and other stuff.
-# - Is there need to make separate functions for collide detection to avoid duplicate code if 
-#   want to use collision detection also in monster classes???
+# - Is there need to make separate functions for collide detection to avoid 
+#   duplicate code if want to use collision detection also in monster classes???
 # - Dividing code into separate files for clarity.
 # - Sound effects!
 # - Camera system for moving backround.
 #
-# TEMP keyword marking code used for test purposes - removed later.
 #===============================================================================
 
 BLACK = (0, 0, 0)
@@ -25,29 +22,100 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
+backround_color = GREY
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
 animation_speed = 6
 tile_x = 32
 tile_y = 32
-g = 1500 # Gravitational acceleration.
+
+g = 1500 # Gravitational acceleration. defaul = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
+fireball_lifetime = 250 # How long fireball stays in the air. def = 250
+fireball_speed = 250 # def = 250
+player_speed = 200 # def = 200
+player_jump_speed = 500 # How high player can jump. def = 500
+monster_speed = 70 # def = 70
 
 # Game window.
 WIDTH = 960
-HEIGHT = 540
+HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
 # Set ground level where player falls without platform.
 GROUND = HEIGHT
 
+# World templates. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
+world0 = [
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"                              ",
+"              M               ",
+]
+
+world1 = [
+"                              ",
+"       M                      ",
+"   M            M        M    ",
+"              W       M       ",
+"      W                       ",
+"            M       W       M ",
+"                    M         ",
+"   WW            M        WW  ",
+"         M                    ",
+"              W          M    ",
+"                   M          ",
+"       M   W                 M",
+"                           M  ",
+"                W  M          ",
+"       M                M     ",
+"W                             ",
+"              M               ",
+]
+
+world2 = [
+"                              ",
+"                              ",
+"          WWWW  M  W    W    W",
+"         WWWWWWWWWWW          ",
+"   WWWWWWW                    ",
+"  WW                          ",
+"W                             ",
+"W                             ",
+"WW                            ",
+"WW     W  M  M   W   W M WWW  ",
+"WWW    WWWWWWWWWWWWWWWWWWW    ",
+"                             W",
+"                          W  W",
+"                       W  WW W",
+"                    W  WW WWWW",
+"WWW   WWW  M   W  WWWWWWWWWWWW",
+"WWW   WWWWWWWWWW  WWWWWWWWWWWW"
+]
+
+# Choose which world to use.
+world = world2
+
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.speed = 200
-        self.jump_speed = 700
+        self.speed = player_speed
+        self.jump_speed = player_jump_speed 
         self.jumping = False
         self.shooting_right = True
         self.velocity_x = 0
@@ -64,7 +132,9 @@ class Robot(pygame.sprite.Sprite):
             self.images.append(img)
         
         self.image = self.images[0]
-        self.rect  = self.image.get_rect()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
     
     def gravity(self, dt):
         if self.rect.bottom > self.ground and self.velocity_y >= 0:
@@ -81,6 +151,17 @@ class Robot(pygame.sprite.Sprite):
     def jump(self):
         self.velocity_y -= self.jump_speed
         self.jumping = True
+
+    def shoot_fireball(self):
+        global shoot_count
+        if shoot_count > 0:
+            shoot_count -= 1
+            if self.shooting_right:
+                fireball = Fireball(fireball_speed, self.rect.x, self.rect.y - 1)
+                all_sprites.add(fireball)
+            else:
+                fireball = Fireball(-fireball_speed, self.rect.x, self.rect.y - 1)
+                all_sprites.add(fireball)
 
     def update(self, dt):
         self.gravity(dt)
@@ -117,12 +198,14 @@ class Robot(pygame.sprite.Sprite):
         elif self.velocity_y > 0:
             self.velocity_y = 0
             self.ground = colliding_tile.rect.top
-
-        # TEMP Looping movement to other side of the window when reaching border.
-        if self.rect.x > WIDTH:
-            self.rect.x = - tile_x
-        elif self.rect.x < - tile_x:
-            self.rect.x = WIDTH
+        
+        # Restricting player movement to inside game window.
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+            self.velocity_x = 0
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.velocity_x = 0
 
         # Animating player movement.
         if self.velocity_x < 0:
@@ -143,7 +226,7 @@ class Fireball(pygame.sprite.Sprite):
     def __init__(self, velocity_x, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
         self.velocity_x = velocity_x
-        self.lifetime = 100 # How long fireball stays in the air.
+        self.lifetime = fireball_lifetime
         self.frame = 0
         self.images = []
         self.animation_cycles = 3
@@ -168,7 +251,13 @@ class Fireball(pygame.sprite.Sprite):
             colliding_monster.kill()
             shoot_count += 1
             self.kill()
-            
+        
+        # Check if fireball hits tiles.
+        colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+        if colliding_tile is not None:
+            shoot_count += 1
+            self.kill()
+        
         if self.lifetime == 0:
             shoot_count += 1
             self.kill()
@@ -187,18 +276,13 @@ class Fireball(pygame.sprite.Sprite):
         else:
             self.image = self.images[0]
             
-        # TEMP Looping movement to other side of the window when reaching border.
-        if self.rect.x > WIDTH:
-            self.rect.x = - tile_x
-        elif self.rect.x < - tile_x:
-            self.rect.x = WIDTH
-    
 # Simple monster class.
 class Monster(pygame.sprite.Sprite):
     
-    def __init__(self, x_location, y_location):
+    def __init__(self, x_location, y_location, speed):
         pygame.sprite.Sprite.__init__(self)
-        self.velocity_x = 0
+        self.speed = speed
+        self.velocity_x = speed
         self.velocity_y = 0
         self.frame = 0
         self.images = []
@@ -214,13 +298,26 @@ class Monster(pygame.sprite.Sprite):
 
     def update(self, dt):
         self.rect.x += int(self.velocity_x * dt)
-        self.rect.y += int(self.velocity_y * dt)
         
-        # TEMP Looping movement to other side of the window when reaching border.
-        if self.rect.x > WIDTH:
-            self.rect.x = - tile_x
-        elif self.rect.x < - tile_x:
-            self.rect.x = WIDTH
+        # Collision detection in x direction.
+        colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
+        if colliding_tile is not None:
+            # Hitting wall from left.
+            if self.velocity_x > 0  and self.rect.bottom != colliding_tile.rect.top:
+                self.rect.right = colliding_tile.rect.left
+                self.velocity_x *= -1
+            # Hitting wall from right.
+            elif self.velocity_x < 0 and self.rect.bottom != colliding_tile.rect.top:
+                self.rect.left = colliding_tile.rect.right
+                self.velocity_x *= -1
+        
+        # Keeps monster inside the game window.
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+            self.velocity_x *= -1
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.velocity_x *= -1
         
         # Animating monster movement.
         if self.velocity_x < 0:
@@ -246,19 +343,23 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x = x_location
         self.rect.y = y_location
 
-# x_start and y_start for where platform starts and width times height = amount of tiles used.
-def create_platform(x_start, y_start, plat_width, plat_height):
-    i = 0
-    while i < plat_height:
-        j = 0
-        while j < plat_width:
-            platform_part = Tile(x_start + j * tile_x, y_start + i * tile_y)
-            all_tiles.add(platform_part)
-            j += 1
-        i += 1
-        
+def generate_world(world):
+    y = 0
+    for row in world:
+        x = 0
+        for element in row:
+            if element == "W": # W = Wall
+                platform_part = Tile(x * tile_x, y * tile_y)
+                all_tiles.add(platform_part)
+            if element == "M": # M = Monster
+                monster = Monster(x * tile_x, y * tile_y, 70)
+                all_sprites.add(monster)
+                all_monsters.add(monster)
+            x += 1
+        y += 1
+
 def update_window(dt):
-    window.fill(GREY)
+    window.fill(backround_color)
     
     # Calls the update() method on all Sprites in the Group.
     all_sprites.update(dt)
@@ -272,37 +373,12 @@ def update_window(dt):
     pygame.display.flip()
 
 def main():
-    global shoot_count
+    # Let there be light!
+    generate_world(world)
     
-    # Hero awakens!
-    player = Robot()
-    player.rect.x = 0
-    player.rect.y = 0
+    # "In a hole in the ground there lived a robot..."
+    player = Robot(0 * tile_x, 15 * tile_y)
     all_sprites.add(player)
-    
-    # TEMP Testing monsters.
-    monster = Monster(0, HEIGHT - tile_y)
-    monster.velocity_x = 150
-    all_sprites.add(monster)
-    all_monsters.add(monster)
-    monster2 = Monster(WIDTH - tile_x, HEIGHT - tile_y)
-    monster2.velocity_x = -150
-    all_sprites.add(monster2)
-    all_monsters.add(monster2)
-    monster3 = Monster(4 * tile_x, HEIGHT - 13 * tile_y)
-    all_sprites.add(monster3)
-    all_monsters.add(monster3)
-    
-    # TEMP Testing platforms.
-    create_platform(21 * tile_x, HEIGHT - 4 * tile_y, 2, 4)
-    create_platform(12 * tile_x, HEIGHT - 1 * tile_y, 2, 1)
-    create_platform(1 * tile_x, HEIGHT - 2 * tile_y, 7, 1)
-    create_platform(12 * tile_x, HEIGHT - 3 * tile_y, 5, 1)
-    create_platform(21 * tile_x, HEIGHT - 8 * tile_y, 3, 1)
-    create_platform(3 * tile_x, HEIGHT - 12 * tile_y, 4, 2)
-    create_platform(18 * tile_x, HEIGHT - 12 * tile_y, 1, 1)
-    create_platform(12 * tile_x, HEIGHT - 11 * tile_y, 1, 1)
-    create_platform(27 * tile_x, HEIGHT - 11 * tile_y, 2, 1)
     
     # Game loop.
     while True:
@@ -313,7 +389,7 @@ def main():
             dt = max_dt
         
         for event in pygame.event.get():
-            # Closes game window.
+            # Close game window with red X button or Esc.
             if (event.type == pygame.QUIT or
                 event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 return pygame.quit()
@@ -323,14 +399,7 @@ def main():
                     player.jump()
             # Shoot fireballs when pressing right shift.
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RSHIFT:
-                if shoot_count > 0:
-                    shoot_count -= 1
-                    if player.shooting_right:
-                        fireball = Fireball(250, player.rect.x, player.rect.y)
-                        all_sprites.add(fireball)
-                    else:
-                        fireball = Fireball(-250, player.rect.x, player.rect.y)
-                        all_sprites.add(fireball)
+                player.shoot_fireball()
                 
         keys = pygame.key.get_pressed()
 
@@ -366,7 +435,7 @@ if __name__ == "__main__":
         # Make groups for handling sprites.
         all_sprites = pygame.sprite.Group()
         all_tiles = pygame.sprite.Group()
-        # All monsters also in all_sprites group, this is for handling monster interaction.
+        # For handling interaction with monsters. Note: monsters are also in all_sprites
         all_monsters = pygame.sprite.Group()
         
         main()
