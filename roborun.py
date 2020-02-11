@@ -9,6 +9,8 @@ import os
 # - Ladders?
 # - Optimize g and player.jump_speed for platforms.
 # - Level class for creating platforms, monsters and other stuff.
+# - Make separate functions for collide detection to avoid duplicate code if 
+# want to use collision detection also in monster classes?
 #
 # TEMP keyword marking code used for test purposes - removed later.
 #===============================================================================
@@ -78,26 +80,35 @@ class Robot(pygame.sprite.Sprite):
     def update(self, dt):
         self.gravity(dt)
         
-        # x = x_0 + v*t
+        # Moving player in x direction. x = x_0 + v_x*t
         self.rect.x += int(self.velocity_x * dt)
+        
+        # Collision detection in x direction.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
+        # Hitting wall from left.
         elif self.velocity_x > 0  and self.ground != colliding_tile.rect.top:
             self.rect.right = colliding_tile.rect.left
             self.velocity_x = 0
+        # Hitting wall from right.
         elif self.velocity_x < 0 and self.ground != colliding_tile.rect.top:
             self.rect.left = colliding_tile.rect.right
             self.velocity_x = 0
         
+        # Moving player in y direction. y = y_0 + v_y*t
         self.rect.y += int(self.velocity_y * dt)
+        
+        # Collision detection in y direction.
         colliding_tile = pygame.sprite.spritecollideany(self, all_tiles)
         if colliding_tile is None:
             self.ground = GROUND
+        # Hitting the ceiling.
         elif self.velocity_y < 0:
             self.rect.top = colliding_tile.rect.bottom
             self.velocity_y = 0
             self.ground = GROUND
+        # Hitting the floor.
         elif self.velocity_y > 0:
             self.velocity_y = 0
             self.ground = colliding_tile.rect.top
