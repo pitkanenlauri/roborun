@@ -47,9 +47,9 @@ window_size = [WIDTH, HEIGHT]
 GROUND = 10000
 
 # World templates. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
-# W = wall M = monster
+# P = Platform M = monster
 # Choose which one to use from below or create your own. 
-# Hint: For convenience use insert to add W's and M's.
+# Hint: For convenience use insert to add P's and M's.
 world0 = [
 "                              ",
 "                              ",
@@ -67,51 +67,51 @@ world0 = [
 "                              ",
 "                              ",
 " M                            ",
-"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
 world1 = [
 "                              ",
 "       M                      ",
 "   M            M        M    ",
-"              W       M       ",
-"      W                       ",
-"            M       W       M ",
+"              P       M       ",
+"      P                       ",
+"            M       P       M ",
 "                    M         ",
-"   WW            M        WW  ",
+"   PP            M        PP  ",
 "         M                    ",
-"              W          M    ",
+"              P          M    ",
 "                   M          ",
-"       M   W                 M",
+"       M   P                 M",
 "                           M  ",
-"                W  M          ",
+"                P  M          ",
 "       M                M     ",
-"W                             ",
-"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"P                             ",
+"PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
 world2 = [
 "                              ",
 "                              ",
-"          WWWW  M  W    W    W",
-"         WWWWWWWWWWW          ",
-"   WWWWWWW                    ",
-"  WW                          ",
-"W                             ",
-"W                             ",
-"WW                            ",
-"WW     W  M  M   W   W M WWW  ",
-"WWW    WWWWWWWWWWWWWWWWWWW    ",
-"                             W",
-"                          W  W",
-"                       W  WW W",
-"                    W  WW WWWW",
-"WWW   WWW  M   W  WWWWWWWWWWWW",
-"WWW   WWWWWWWWWW  WWWWWWWWWWWW"
+"          PP    M  P    P    P",
+"         PPPPPPPPPPP          ",
+"   PPPPPPP                    ",
+"  PP                          ",
+"P                             ",
+"P                             ",
+"PP                            ",
+"PP     P  M  M   P    M PPPP  ",
+"PPP    PPPPPPPPPPPPPPPPPPP    ",
+"                             P",
+"                          P  P",
+"                       P  PP P",
+"                    P  PP PPPP",
+"PPP   PPP  M   P  PPPPPPPPPPPP",
+"PPP   PPPPPPPPPP  PPPPPPPPPPPP",
 ]
 
 # Choose which world to use.
-world = world2
+world = world0
 
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
@@ -362,7 +362,7 @@ def generate_world(world):
     for row in world:
         x = 0
         for element in row:
-            if element == "W": # W = Wall
+            if element == "P": # P = Platform
                 platform_part = Tile(x * tile_x, y * tile_y)
                 all_tiles.add(platform_part)
             if element == "M": # M = Monster
