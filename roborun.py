@@ -28,7 +28,7 @@ max_dt = 1 / 20 # Cap for delta time.
 animation_speed = 6
 tile_x = 32
 tile_y = 32
-camera_speed = 0.06 # For smooth moving camera -> how fast it catches player. def = 0.06
+camera_speed = 0.06 # Smooth scrolling, how fast camera catches the player. def = 0.06
 
 lives = 10
 reset_lives = lives
@@ -49,7 +49,7 @@ window_size = [WIDTH, HEIGHT]
 # Set ground level where player falls without platform.
 GROUND = 2048
 
-# World templates. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
+# World templates for testing. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
 # P = Platform M = monster
 # Choose which one to use from below or create your own. 
 # Hint: For convenience use insert to add P's and M's.
@@ -496,7 +496,8 @@ def main():
                 if not player.jumping:
                     player.jump()
             # Shoot fireballs when pressing right shift.
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RSHIFT:
+            elif event.type == pygame.KEYDOWN and (
+                event.key == pygame.K_RSHIFT or event.key == pygame.K_LSHIFT):
                 player.shoot_fireball()
                 
         keys = pygame.key.get_pressed()
