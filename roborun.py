@@ -34,6 +34,7 @@ lives = 10
 reset_lives = lives
 g = 1500 # Gravitational acceleration. def = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
+reset_fire = shoot_count
 fireball_lifetime = 250 # How long fireball stays in the air. def = 250
 fireball_speed = 250 # def = 250
 player_speed = 200 # def = 200
@@ -460,6 +461,7 @@ def game_over(player):
                 return
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
                 lives = reset_lives
+                shoot_count = reset_fire
                 all_sprites.empty()
                 all_tiles.empty()
                 all_monsters.empty()
