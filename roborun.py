@@ -4,13 +4,11 @@ import os
 
 #===============================================================================
 # TODO:
-# - Ladders?
-# - Optimize g and player.jump_speed for platforms.
-# - Is there need to make separate functions for collide detection to avoid 
-#   duplicate code if want to use collision detection also in monster classes???
-# - Dividing code into separate files for clarity.
+# - Some items to collect?
+# - Divide code into separate files for clarity.
 # - Sound effects!
-# - Camera system for moving backround.
+# - Camera system for moving backround?
+# - Optimize g and player movement for wanted map dynamics.
 #
 #===============================================================================
 
@@ -29,7 +27,8 @@ animation_speed = 6
 tile_x = 32
 tile_y = 32
 
-g = 1500 # Gravitational acceleration. defaul = 1500
+lives = 10
+g = 1500 # Gravitational acceleration. default = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
 fireball_lifetime = 250 # How long fireball stays in the air. def = 250
 fireball_speed = 250 # def = 250
@@ -42,10 +41,15 @@ WIDTH = 960
 HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
+reset_lives = lives
+
 # Set ground level where player falls without platform.
-GROUND = HEIGHT
+GROUND = 10000
 
 # World templates. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
+# W = wall M = monster
+# Choose which one to use from below or create your own. 
+# Hint: For convenience use insert to add W's and M's.
 world0 = [
 "                              ",
 "                              ",
@@ -62,8 +66,8 @@ world0 = [
 "                              ",
 "                              ",
 "                              ",
-"                              ",
-"              M               ",
+" M                            ",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
 ]
 
 world1 = [
@@ -83,7 +87,7 @@ world1 = [
 "                W  M          ",
 "       M                M     ",
 "W                             ",
-"              M               ",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
 ]
 
 world2 = [
@@ -114,6 +118,7 @@ class Robot(pygame.sprite.Sprite):
     
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
+        self.hit_time = 100
         self.speed = player_speed
         self.jump_speed = player_jump_speed 
         self.jumping = False
@@ -199,6 +204,15 @@ class Robot(pygame.sprite.Sprite):
             self.velocity_y = 0
             self.ground = colliding_tile.rect.top
         
+        # Check if monsters got you.
+        global lives
+        colliding_monster = pygame.sprite.spritecollideany(self, all_monsters)
+        if (colliding_monster is not None) and (self.hit_time >= 100):
+            lives -= 1
+            self.jump()
+            self.hit_time = 0
+        self.hit_time += 1
+            
         # Restricting player movement to inside game window.
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
@@ -332,7 +346,8 @@ class Monster(pygame.sprite.Sprite):
             self.frame += 1
         else:
             self.image = self.images[10]
-        
+
+# Class for generating tile object.        
 class Tile(pygame.sprite.Sprite):
     
     def __init__(self, x_location, y_location):
@@ -358,6 +373,14 @@ def generate_world(world):
             x += 1
         y += 1
 
+# Show how much lives player has left.
+def draw_lives():
+    global lives
+    i = 0
+    for i in range(lives):
+        window.blit(pygame.image.load(
+            os.path.join(assets,'heart.png')).convert_alpha(), (i * 20 + 4, 4))
+
 def update_window(dt):
     window.fill(backround_color)
     
@@ -369,9 +392,31 @@ def update_window(dt):
     # and Sprite.rect for the position.
     all_sprites.draw(window)
     all_tiles.draw(window)
+    draw_lives()
 
     pygame.display.flip()
-
+    
+def game_over(player):
+    global lives
+    window.fill(BLACK)
+    font = pygame.font.Font('freesansbold.ttf', 16)
+    text = font.render("Game over  -  Press n for new game!", True, WHITE)
+    window.blit(text, (int(WIDTH / 2) - int(text.get_rect().width / 2), 256))
+    window.blit(player.images[20], (int(WIDTH / 2) - 16, 200))
+    pygame.display.flip()
+    while True:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if (event.type == pygame.QUIT or
+                event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                return
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                lives = reset_lives
+                all_sprites.empty()
+                all_tiles.empty()
+                all_monsters.empty()
+                return main()
+    
 def main():
     # Let there be light!
     generate_world(world)
@@ -414,6 +459,11 @@ def main():
 
         update_window(dt)
         
+        global lives
+        if lives <= 0 or player.rect.y > 1000:
+            game_over(player)
+            return
+    
 if __name__ == "__main__":
     try:
         # Initialize PyGame and create game window.
@@ -435,7 +485,7 @@ if __name__ == "__main__":
         # Make groups for handling sprites.
         all_sprites = pygame.sprite.Group()
         all_tiles = pygame.sprite.Group()
-        # For handling interaction with monsters. Note: monsters are also in all_sprites
+        # For handling interaction with monsters, monsters are also in all_sprites.
         all_monsters = pygame.sprite.Group()
         
         main()
