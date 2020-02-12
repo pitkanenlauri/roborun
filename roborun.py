@@ -293,10 +293,9 @@ class Fireball(pygame.sprite.Sprite):
 # Simple monster class.
 class Monster(pygame.sprite.Sprite):
     
-    def __init__(self, x_location, y_location, speed):
+    def __init__(self, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
-        self.speed = speed
-        self.velocity_x = speed
+        self.velocity_x = monster_speed
         self.velocity_y = 0
         self.frame = 0
         self.images = []
@@ -367,7 +366,7 @@ def generate_world(world):
                 platform_part = Tile(x * tile_x, y * tile_y)
                 all_tiles.add(platform_part)
             if element == "M": # M = Monster
-                monster = Monster(x * tile_x, y * tile_y, 70)
+                monster = Monster(x * tile_x, y * tile_y)
                 all_sprites.add(monster)
                 all_monsters.add(monster)
             x += 1
@@ -376,7 +375,6 @@ def generate_world(world):
 # Show how much lives player has left.
 def draw_lives():
     global lives
-    i = 0
     for i in range(lives):
         window.blit(pygame.image.load(
             os.path.join(assets,'heart.png')).convert_alpha(), (i * 20 + 4, 4))
@@ -459,6 +457,7 @@ def main():
 
         update_window(dt)
         
+        # Game is over if lives end or player drops out of map.
         global lives
         if lives <= 0 or player.rect.y > 1000:
             game_over(player)
