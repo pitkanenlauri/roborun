@@ -6,9 +6,10 @@ import os
 # TODO:
 # - Some items to collect?
 # - Divide code into separate files for clarity.
+# - Make world loader and place worlds to text files.
 # - Sound effects!
-# - Camera system for moving backround?
-# - Optimize g and player movement for wanted map dynamics.
+# - Optimize g and player movement for wanted world dynamics.
+# - Optimize rendering, dont draw sprites that go outside the game window.
 #
 #===============================================================================
 
@@ -27,10 +28,11 @@ max_dt = 1 / 20 # Cap for delta time.
 animation_speed = 6
 tile_x = 32
 tile_y = 32
+camera_speed = 0.06 # For smooth moving camera -> how fast it catches player. def = 0.06
 
 lives = 10
 reset_lives = lives
-g = 1500 # Gravitational acceleration. default = 1500
+g = 1500 # Gravitational acceleration. def = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
 fireball_lifetime = 250 # How long fireball stays in the air. def = 250
 fireball_speed = 250 # def = 250
@@ -44,7 +46,7 @@ HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
 # Set ground level where player falls without platform.
-GROUND = 10000
+GROUND = 2048
 
 # World templates. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
 # P = Platform M = monster
@@ -110,8 +112,45 @@ world2 = [
 "PPP   PPPPPPPPPP  PPPPPPPPPPPP",
 ]
 
+world3 = [
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+"                                                            ",
+" M                                                          ",
+"PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+]
+
 # Choose which world to use.
-world = world20
+world = world2
 
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
@@ -212,15 +251,7 @@ class Robot(pygame.sprite.Sprite):
             self.jump()
             self.hit_time = 0
         self.hit_time += 1
-            
-        # Restricting player movement to inside game window.
-        if self.rect.right > WIDTH:
-            self.rect.right = WIDTH
-            self.velocity_x = 0
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.velocity_x = 0
-
+        
         # Animating player movement.
         if self.velocity_x < 0:
             if self.frame >= self.animation_cycles * animation_speed:
@@ -324,14 +355,6 @@ class Monster(pygame.sprite.Sprite):
                 self.rect.left = colliding_tile.rect.right
                 self.velocity_x *= -1
         
-        # Keeps monster inside the game window.
-        if self.rect.right > WIDTH:
-            self.rect.right = WIDTH
-            self.velocity_x *= -1
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.velocity_x *= -1
-        
         # Animating monster movement.
         if self.velocity_x < 0:
             if self.frame >= self.animation_cycles * animation_speed:
@@ -357,6 +380,33 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x = x_location
         self.rect.y = y_location
 
+# Class for implementing world scrolling.
+class Camera(object):
+    def __init__(self, camera_function, world_width, world_height):
+        self.camera_function = camera_function
+        self.state = pygame.Rect(0, 0, world_width, world_height)
+
+    def apply(self, target):
+        return target.rect.move(self.state.topleft)
+
+    def update(self, source):
+        self.state = self.camera_function(self.state, source.rect)
+
+# Function for moving camera, centered around source_rect.
+def camera_function(camera, source_rect):
+    # Center camera to source_rect center.
+    x = -source_rect.center[0] + int(WIDTH / 2)
+    y = -source_rect.center[1] + int(HEIGHT / 2)
+    position = pygame.Vector2(camera.topleft)
+    # Move the camera, multiplies by camera_speed for smoothness.
+    position += (pygame.Vector2((x, y)) 
+                       - pygame.Vector2(camera.topleft)) * camera_speed
+    camera.topleft = (int(position.x), int(position.y))
+#     # Set max/min x/y to limit camera from moving outside world borders.
+#     camera.x = max(-(camera.width - WIDTH), min(0, camera.x))
+#     camera.y = max(-(camera.height - HEIGHT), min(0, camera.y))
+    return camera
+
 def generate_world(world):
     y = 0
     for row in world:
@@ -379,19 +429,19 @@ def draw_lives():
         window.blit(pygame.image.load(
             os.path.join(assets,'heart.png')).convert_alpha(), (i * 20 + 4, 4))
 
-def update_window(dt):
+def update_window(dt, camera):
     window.fill(backround_color)
     
     # Calls the update() method on all Sprites in the Group.
     all_sprites.update(dt)
     
-    # Draws the contained Sprites to the Surface argument. 
-    # This uses the Sprite.image attribute for the source surface, 
-    # and Sprite.rect for the position.
-    all_sprites.draw(window)
-    all_tiles.draw(window)
-    draw_lives()
+    # Render world.
+    for sprite in all_sprites:
+        window.blit(sprite.image, camera.apply(sprite))
+    for tile in all_tiles:
+        window.blit(tile.image, camera.apply(tile))
 
+    draw_lives()
     pygame.display.flip()
     
 def game_over(player):
@@ -418,6 +468,8 @@ def game_over(player):
 def main():
     # Let there be light!
     generate_world(world)
+    
+    camera = Camera(camera_function, tile_x * 60, tile_y * 34)
     
     # "In a hole in the ground there lived a robot..."
     player = Robot(0 * tile_x, 15 * tile_y)
@@ -454,12 +506,13 @@ def main():
             player.shooting_right = True
         else:
             player.velocity_x = 0
-
-        update_window(dt)
+        
+        camera.update(player)
+        update_window(dt, camera)
         
         # Game ends if player runs out of lives or drops out of map.
         global lives
-        if lives <= 0 or player.rect.y > 1000:
+        if lives <= 0 or player.rect.y > 1024:
             game_over(player)
             return
     
