@@ -111,7 +111,7 @@ world2 = [
 ]
 
 # Choose which world to use.
-world = world2
+world = world20
 
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
