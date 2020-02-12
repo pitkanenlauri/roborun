@@ -447,6 +447,7 @@ def update_window(dt, camera):
     
 def game_over(player):
     global lives
+    global shoot_count
     window.fill(BLACK)
     font = pygame.font.Font('freesansbold.ttf', 16)
     text = font.render("Game over  -  Press n for new game!", True, WHITE)
