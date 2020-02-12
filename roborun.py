@@ -21,6 +21,7 @@ BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
 backround_color = GREY
+
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
 animation_speed = 6
@@ -28,6 +29,7 @@ tile_x = 32
 tile_y = 32
 
 lives = 10
+reset_lives = lives
 g = 1500 # Gravitational acceleration. default = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
 fireball_lifetime = 250 # How long fireball stays in the air. def = 250
@@ -40,8 +42,6 @@ monster_speed = 70 # def = 70
 WIDTH = 960
 HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
-
-reset_lives = lives
 
 # Set ground level where player falls without platform.
 GROUND = 10000
@@ -457,7 +457,7 @@ def main():
 
         update_window(dt)
         
-        # Game is over if lives end or player drops out of map.
+        # Game ends if player runs out of lives or drops out of map.
         global lives
         if lives <= 0 or player.rect.y > 1000:
             game_over(player)
