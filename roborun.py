@@ -52,9 +52,9 @@ HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
 # World templates for testing. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
-# P = Platform M = monster
+# P = Platform M = monster S = Spawn player
 # Choose which one to use from below or create your own. 
-# Hint: For convenience use insert to add P's and M's.
+# Hint: For convenience use insert to place P, M, S etc.
 world0 = [
 "                              ",
 "                              ",
@@ -71,7 +71,7 @@ world0 = [
 "                              ",
 "                              ",
 "                              ",
-" M                            ",
+"SM                            ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
@@ -91,7 +91,7 @@ world1 = [
 "                           M  ",
 "                P  M          ",
 "       M                M     ",
-"P                             ",
+"PS                            ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
@@ -110,7 +110,7 @@ world2 = [
 "                             P",
 "                          P  P",
 "                       P  PP P",
-"                    P  PP PPPP",
+"S                   P  PP PPPP",
 "PPP   PPP  M   P  PPPPPPPPPPPP",
 "PPP   PPPPPPPPPP  PPPPPPPPPPPP",
 ]
@@ -148,7 +148,7 @@ world3 = [
 "                                                            ",
 "                                                            ",
 "                                                            ",
-"                                                            ",
+"S                                                           ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
@@ -419,6 +419,8 @@ def generate_world(world):
     for row in world:
         x = 0
         for element in row:
+            if element == "S": # S = Spawn player
+                start_pos = [x, y + 1]
             if element == "P": # P = Platform
                 platform_part = Tile(x * tile_x, y * tile_y)
                 all_tiles.add(platform_part)
@@ -428,6 +430,7 @@ def generate_world(world):
                 all_monsters.add(monster)
             x += 1
         y += 1
+    return start_pos
 
 # Show how much lives player has left.
 def draw_lives():
@@ -476,12 +479,12 @@ def game_over(player):
     
 def main():
     # Let there be light!
-    generate_world(world)
+    start_pos = generate_world(world)
     
     camera = Camera(camera_function, tile_x * len(world[0]), tile_y * len(world))
     
     # "In a hole in the ground there lived a robot..."
-    player = Robot(0 * tile_x, 15 * tile_y)
+    player = Robot(start_pos[0] * tile_x, start_pos[1] * tile_y)
     all_sprites.add(player)
     
     # Game loop.
