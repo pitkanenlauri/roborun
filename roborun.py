@@ -7,10 +7,10 @@ import os
 # - Parent class for all sprites for collisiondetection and animation etc.
 # - Some items to collect?
 # - Divide code into separate files for clarity.
-# - Make world loader and place worlds to text files.
+# - Make world loader and place worlds in text files.
 # - Sound effects!
-# - Optimize g and player movement for wanted world dynamics.
-# - Optimize rendering, dont draw sprites that go outside the game window.
+# - Optimize g and player movement variables for wanted world dynamics.
+# - Optimize rendering, by drawing only the sprites inside game window.
 # - Level loader class.
 # - Center camera starting position accordding to player spawn position.
 # - Start up screen and world selection?
@@ -116,40 +116,40 @@ world2 = [
 ]
 
 world3 = [
+"              P                                             ",
+"              P                                             ",
+"              P                                             ",
+"            PPPPP       S                                   ",
+"             PPP        P    P    P    P                    ",
+"  PPPPP       P                                             ",
+" P     P                                 P                  ",
+" P P P P                                                    ",
+"P       P                                  P                ",
+"P P   P P                                                   ",
+"P  PPP  P                                    P              ",
+" P     P                                                    ",
+"  PPPPP                                        P            ",
+"              PPPP                                          ",
+"                                             P              ",
+"                                                            ",
+"                                           P                ",
+"                                                            ",
+"                                         P                  ",
+"                                                            ",
+"                                       P                    ",
+"                                                            ",
+"                                 PPPPP                      ",
+"                                PP                          ",
+"                               PP                           ",
+"                  P    P    P                               ",
+"              P                                             ",
 "                                                            ",
 "                                                            ",
 "                                                            ",
 "                                                            ",
 "                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"                                                            ",
-"S                                                           ",
-"PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+"S P M M M M M M P                                           ",
+"PPPPPPPPPPPPPPPPP                                           ",
 ]
 
 # Choose which world to use.
@@ -390,15 +390,18 @@ class Tile(pygame.sprite.Sprite):
 class Camera(object):
     def __init__(self, camera_function, world_width, world_height):
         self.camera_function = camera_function
+        # Store cameras top left corner and world borders in rect.
         self.state = pygame.Rect(0, 0, world_width, world_height)
-
+    
+    # Offset target sprite's position according to camera state.
     def apply(self, target):
         return target.rect.move(self.state.topleft)
-
+    
+    # Keep cameras position constant in relation to source.
     def update(self, source):
         self.state = self.camera_function(self.state, source.rect)
 
-# Function for moving camera, centered around source_rect.
+# Function for moving camera.
 def camera_function(camera, source_rect):
     # Center camera to source_rect center.
     x = -source_rect.center[0] + int(WIDTH / 2)
@@ -529,7 +532,7 @@ def main():
             game_over(player)
             return
     
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         # Initialize PyGame and create game window.
         pygame.init()
