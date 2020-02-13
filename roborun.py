@@ -397,7 +397,7 @@ class Camera(object):
     def apply(self, target):
         return target.rect.move(self.state.topleft)
     
-    # Keep cameras position constant in relation to source.
+    # Keep camera position constant in relation to source.
     def update(self, source):
         self.state = self.camera_function(self.state, source.rect)
 
