@@ -4,12 +4,16 @@ import os
 
 #===============================================================================
 # TODO:
+# - Parent class for all sprites for collisiondetection and animation etc.
 # - Some items to collect?
 # - Divide code into separate files for clarity.
 # - Make world loader and place worlds to text files.
 # - Sound effects!
 # - Optimize g and player movement for wanted world dynamics.
 # - Optimize rendering, dont draw sprites that go outside the game window.
+# - Level loader class.
+# - Center camera starting position accordding to player spawn position.
+# - Start up screen and world selection?
 #
 #===============================================================================
 
@@ -29,13 +33,14 @@ animation_speed = 6
 tile_x = 32
 tile_y = 32
 camera_speed = 0.06 # Smooth scrolling, how fast camera catches the player. def = 0.06
+borders = False # If True camera wont show stuff outside world borders.
 
 lives = 10
 reset_lives = lives
 g = 1500 # Gravitational acceleration. def = 1500
 shoot_count = 10 # Amount of fireballs that can be on air at once.
 reset_fire = shoot_count
-fireball_lifetime = 250 # How long fireball stays in the air. def = 250
+fireball_lifetime = 250 # def = 250
 fireball_speed = 250 # def = 250
 player_speed = 200 # def = 200
 player_jump_speed = 500 # How high player can jump. def = 500
@@ -45,9 +50,6 @@ monster_speed = 70 # def = 70
 WIDTH = 960
 HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
-
-# Set ground level where player falls without platform.
-GROUND = 2048
 
 # World templates for testing. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
 # P = Platform M = monster
@@ -146,12 +148,15 @@ world3 = [
 "                                                            ",
 "                                                            ",
 "                                                            ",
-" M                                                          ",
+"                                                            ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
 # Choose which world to use.
 world = world2
+
+# Set ground level where player falls without platform.
+GROUND = len(world) * tile_y + 2048
 
 # Class for creating player sprite.
 class Robot(pygame.sprite.Sprite):
@@ -403,9 +408,10 @@ def camera_function(camera, source_rect):
     position += (pygame.Vector2((x, y)) 
                        - pygame.Vector2(camera.topleft)) * camera_speed
     camera.topleft = (int(position.x), int(position.y))
-#     # Set max/min x/y to limit camera from moving outside world borders.
-#     camera.x = max(-(camera.width - WIDTH), min(0, camera.x))
-#     camera.y = max(-(camera.height - HEIGHT), min(0, camera.y))
+    # Set max/min x/y to limit camera from moving outside world borders.
+    if borders:
+        camera.x = max(-(camera.width - WIDTH), min(0, camera.x))
+        camera.y = max(-(camera.height - HEIGHT), min(0, camera.y))
     return camera
 
 def generate_world(world):
@@ -472,7 +478,7 @@ def main():
     # Let there be light!
     generate_world(world)
     
-    camera = Camera(camera_function, tile_x * 60, tile_y * 34)
+    camera = Camera(camera_function, tile_x * len(world[0]), tile_y * len(world))
     
     # "In a hole in the ground there lived a robot..."
     player = Robot(0 * tile_x, 15 * tile_y)
@@ -516,7 +522,7 @@ def main():
         
         # Game ends if player runs out of lives or drops out of map.
         global lives
-        if lives <= 0 or player.rect.y > 1024:
+        if lives <= 0 or player.rect.y > (len(world) * tile_y + 512):
             game_over(player)
             return
     
