@@ -423,7 +423,7 @@ def generate_world(world):
         x = 0
         for element in row:
             if element == "S": # S = Spawn player
-                start_pos = [x, y + 1]
+                start_pos = [x, y]
             if element == "P": # P = Platform
                 platform_part = Tile(x * tile_x, y * tile_y)
                 all_tiles.add(platform_part)
