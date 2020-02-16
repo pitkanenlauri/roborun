@@ -119,7 +119,7 @@ world3 = [
 "              P                                             ",
 "              P                                             ",
 "              P                                             ",
-"            PPPPP       S                                   ",
+"            PPPPP                                           ",
 "             PPP        P    P    P    P                    ",
 "  PPPPP       P                                             ",
 " P     P                                 P                  ",
@@ -153,7 +153,7 @@ world3 = [
 ]
 
 # Choose which world to use.
-world = world2
+world = world3
 
 # Set ground level where player falls without platform.
 GROUND = len(world) * tile_y + 2048
