@@ -153,7 +153,7 @@ world3 = [
 ]
 
 # Choose which world to use.
-world = world3
+world = world2
 
 # Set ground level where player falls without platform.
 GROUND = len(world) * tile_y + 2048
