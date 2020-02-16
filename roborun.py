@@ -4,6 +4,7 @@ import os
 
 #===============================================================================
 # TODO:
+# - Coin counter?
 # - Parent class for all sprites for collisiondetection and animation etc.
 # - Divide code into separate files for clarity.
 # - Make world loader and place worlds in text files.
@@ -25,7 +26,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
-backround_color = SKY_BLUE
+backround_color = GREY
 
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
@@ -123,7 +124,7 @@ world3 = [
 "             PPP        P    P    P    P                    ",
 "  PPPPP       P                                             ",
 " P     P                                 P   C              ",
-" P P P P                                                    ",
+" P C C P                                                    ",
 "P       P                                  P   C            ",
 "P P   P P                                                   ",
 "P  PPP  P     CCCC                           P              ",
@@ -257,6 +258,10 @@ class Robot(pygame.sprite.Sprite):
             self.jump()
             self.hit_time = 0
         self.hit_time += 1
+        
+        colliding_coin = pygame.sprite.spritecollideany(self, all_coins)
+        if colliding_coin is not None:
+            colliding_coin.kill()
         
         # Animating player movement.
         if self.velocity_x < 0:
@@ -459,6 +464,7 @@ def generate_world(world):
             if element == "C": # C = Coin
                 coin = Coin(x * tile_x, y * tile_y)
                 all_sprites.add(coin)
+                all_coins.add(coin)
             x += 1
         y += 1
     return start_pos
@@ -583,6 +589,7 @@ if __name__ == '__main__':
         all_tiles = pygame.sprite.Group()
         # For handling interaction with monsters, monsters are also in all_sprites.
         all_monsters = pygame.sprite.Group()
+        all_coins = pygame.sprite.Group()
         
         main()
     except:
