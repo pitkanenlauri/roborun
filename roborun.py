@@ -5,7 +5,6 @@ import os
 #===============================================================================
 # TODO:
 # - Parent class for all sprites for collisiondetection and animation etc.
-# - Some items to collect?
 # - Divide code into separate files for clarity.
 # - Make world loader and place worlds in text files.
 # - Sound effects!
@@ -14,6 +13,7 @@ import os
 # - Level loader class.
 # - Center camera starting position accordding to player spawn position.
 # - Start up screen and world selection?
+# - Conversion to int in camera_speed causes jerk in camera movement. Fix???
 #
 #===============================================================================
 
@@ -25,7 +25,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
-backround_color = GREY
+backround_color = SKY_BLUE
 
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
@@ -52,7 +52,7 @@ HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
 # World templates for testing. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
-# P = Platform M = monster S = Spawn player
+# P = Platform M = monster S = Spawn player C = Coin
 # Choose which one to use from below or create your own. 
 # Hint: For convenience use insert to place P, M, S etc.
 world0 = [
@@ -69,26 +69,26 @@ world0 = [
 "                              ",
 "                              ",
 "                              ",
+"   C                          ",
 "                              ",
-"                              ",
-"SM                            ",
+"S          M                  ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
 world1 = [
-"                              ",
-"       M                      ",
-"   M            M        M    ",
-"              P       M       ",
-"      P                       ",
+"              C               ",
+"       M      C               ",
+"   M          C M        M    ",
+"      C       P       M       ",
+"      P             C         ",
 "            M       P       M ",
-"                    M         ",
+"   C                M      C  ",
 "   PP            M        PP  ",
-"         M                    ",
+"         M    C               ",
 "              P          M    ",
-"                   M          ",
+"           C       M          ",
 "       M   P                 M",
-"                           M  ",
+"                C          M  ",
 "                P  M          ",
 "       M                M     ",
 "PS                            ",
@@ -96,20 +96,20 @@ world1 = [
 ]
 
 world2 = [
+"           C       C    C    C",
 "                              ",
-"                              ",
-"          PP    M  P    P    P",
+"    C  C  PP    M  P    P    P",
 "         PPPPPPPPPPP          ",
 "   PPPPPPP                    ",
 "  PP                          ",
-"P                             ",
-"P                             ",
+"P C                           ",
+"P      C         C        C   ",
 "PP                            ",
 "PP     P  M  M   P    M PPPP  ",
-"PPP    PPPPPPPPPPPPPPPPPPP    ",
-"                             P",
-"                          P  P",
-"                       P  PP P",
+"PPP    PPPPPPPPPPPPPPPPPPP  C ",
+"                         C   P",
+"                     C    P  P",
+"       C       C       P  PP P",
 "S                   P  PP PPPP",
 "PPP   PPP  M   P  PPPPPPPPPPPP",
 "PPP   PPPPPPPPPP  PPPPPPPPPPPP",
@@ -118,28 +118,28 @@ world2 = [
 world3 = [
 "              P                                             ",
 "              P                                             ",
-"              P                                             ",
-"            PPPPP                                           ",
+"              P           C    C    C                       ",
+"            PPPPP                          C                ",
 "             PPP        P    P    P    P                    ",
 "  PPPPP       P                                             ",
-" P     P                                 P                  ",
+" P     P                                 P   C              ",
 " P P P P                                                    ",
-"P       P                                  P                ",
+"P       P                                  P   C            ",
 "P P   P P                                                   ",
-"P  PPP  P                                    P              ",
-" P     P                                                    ",
-"  PPPPP                                        P            ",
-"              PPPP                                          ",
+"P  PPP  P     CCCC                           P              ",
+" P     P      CCCC                                          ",
+"  PPPPP       CCCC                             P            ",
+"              PPPP                         C                ",
 "                                             P              ",
 "                                                            ",
 "                                           P                ",
-"                                                            ",
+"                                       C                    ",
 "                                         P                  ",
 "                                                            ",
-"                                       P                    ",
+"                                 C     P                    ",
 "                                                            ",
-"                                 PPPPP                      ",
-"                                PP                          ",
+"                     C    C      PPPPP                      ",
+"                C               PP                          ",
 "                               PP                           ",
 "                  P    P    P                               ",
 "              P                                             ",
@@ -176,7 +176,7 @@ class Robot(pygame.sprite.Sprite):
         self.animation_cycles = 10
         
         # Load all the images for player movement animation.
-        for i in range(1,22):
+        for i in range(0,21):
             img = pygame.image.load(
                 os.path.join(assets, 'robo' + str(i) + '.png')).convert_alpha()
             self.images.append(img)
@@ -260,20 +260,22 @@ class Robot(pygame.sprite.Sprite):
         
         # Animating player movement.
         if self.velocity_x < 0:
+            self.image = self.images[self.frame//animation_speed + 1]
+            self.frame += 1
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed]
-            self.frame += 1
         elif self.velocity_x > 0:
+            self.image = self.images[
+                self.frame//animation_speed + 1 + self.animation_cycles]
+            self.frame += 1
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed + self.animation_cycles]
-            self.frame += 1
         else:
-            self.image = self.images[20]
+            self.image = self.images[0]
 
 # Fireball projectile class which player can shoot.
 class Fireball(pygame.sprite.Sprite):
+
     def __init__(self, velocity_x, x_location, y_location):
         pygame.sprite.Sprite.__init__(self)
         self.velocity_x = velocity_x
@@ -281,7 +283,7 @@ class Fireball(pygame.sprite.Sprite):
         self.frame = 0
         self.images = []
         self.animation_cycles = 3
-        for i in range(0,6):
+        for i in range(1,7):
             img = pygame.image.load(
                 os.path.join(assets, 'fireball' + str(i) + '.png')).convert_alpha()
             self.images.append(img)
@@ -315,18 +317,18 @@ class Fireball(pygame.sprite.Sprite):
         
         # Animating fireball movement.
         if self.velocity_x < 0:
-            if self.frame >= self.animation_cycles * animation_speed:
-                self.frame = 0
             self.image = self.images[self.frame//animation_speed]
             self.frame += 1
-        elif self.velocity_x > 0:
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
+        elif self.velocity_x > 0:
             self.image = self.images[self.frame//animation_speed + self.animation_cycles]
             self.frame += 1
+            if self.frame >= self.animation_cycles * animation_speed:
+                self.frame = 0
         else:
             self.image = self.images[0]
-            
+        
 # Simple monster class.
 class Monster(pygame.sprite.Sprite):
     
@@ -363,18 +365,41 @@ class Monster(pygame.sprite.Sprite):
         
         # Animating monster movement.
         if self.velocity_x < 0:
+            self.image = self.images[self.frame//animation_speed + 1]
+            self.frame += 1
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed]
-            self.frame += 1
         elif self.velocity_x > 0:
+            self.image = self.images[
+                self.frame//animation_speed + 1 + self.animation_cycles]
+            self.frame += 1
             if self.frame >= self.animation_cycles * animation_speed:
                 self.frame = 0
-            self.image = self.images[self.frame//animation_speed + self.animation_cycles]
-            self.frame += 1
         else:
-            self.image = self.images[10]
+            self.image = self.images[0]
 
+class Coin(pygame.sprite.Sprite):
+    
+    def __init__(self, x_location, y_location):
+        pygame.sprite.Sprite.__init__(self)
+        self.frame = 0
+        self.images = []
+        self.animation_cycles = 9
+        for i in range(1,10):
+            img = pygame.image.load(
+                os.path.join(assets, 'coin' + str(i) + '.png')).convert_alpha()
+            self.images.append(img)
+        self.image = self.images[0]
+        self.rect  = self.image.get_rect()
+        self.rect.x = x_location
+        self.rect.y = y_location
+    
+    def update(self, dt):
+        self.image = self.images[self.frame//animation_speed]
+        self.frame += 1
+        if self.frame >= self.animation_cycles * animation_speed:
+            self.frame = 0
+        
 # Class for generating tile object.        
 class Tile(pygame.sprite.Sprite):
     
@@ -431,6 +456,9 @@ def generate_world(world):
                 monster = Monster(x * tile_x, y * tile_y)
                 all_sprites.add(monster)
                 all_monsters.add(monster)
+            if element == "C": # C = Coin
+                coin = Coin(x * tile_x, y * tile_y)
+                all_sprites.add(coin)
             x += 1
         y += 1
     return start_pos
@@ -464,7 +492,7 @@ def game_over(player):
     font = pygame.font.Font('freesansbold.ttf', 16)
     text = font.render("Game over  -  Press n for new game!", True, WHITE)
     window.blit(text, (int(WIDTH / 2) - int(text.get_rect().width / 2), 256))
-    window.blit(player.images[20], (int(WIDTH / 2) - 16, 200))
+    window.blit(player.images[0], (int(WIDTH / 2) - 16, 200))
     pygame.display.flip()
     while True:
         clock.tick(FPS)
