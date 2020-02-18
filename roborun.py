@@ -25,7 +25,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
-backround_color = SKY_BLUE
+backround_color = GREY
 
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
@@ -93,8 +93,8 @@ world1 = [
 "                C          M  ",
 "                P  M          ",
 "S      M                M     ",
-"P                             ",
-"PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+"P MMMMMMMMM                   ",
+"PPPPPPPPPPPPPPPPPPPP         ",
 "                              ",
 "                              ",
 "                              ",
@@ -105,7 +105,7 @@ world1 = [
 "         CCCCCCCCC            ",
 "         CCCCCCCCC            ",
 "         CCCCCCCCC            ",
-"  P    P  P  P  P  P          ",
+"          P  P  P  P          ",
 ]
 
 world2 = [
