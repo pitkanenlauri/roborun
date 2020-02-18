@@ -4,7 +4,6 @@ import os
 
 #===============================================================================
 # TODO:
-# - Coin counter?
 # - Parent class for all sprites for collisiondetection and animation etc.
 # - Divide code into separate files for clarity.
 # - Make world loader and place worlds in text files.
@@ -26,7 +25,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
 
-backround_color = GREY
+backround_color = SKY_BLUE
 
 FPS = 60 # Target screen refresh rate.
 max_dt = 1 / 20 # Cap for delta time.
@@ -46,6 +45,8 @@ fireball_speed = 250 # def = 250
 player_speed = 200 # def = 200
 player_jump_speed = 500 # How high player can jump. def = 500
 monster_speed = 70 # def = 70
+coins_total = 0
+reset_coins = coins_total
 
 # Game window.
 WIDTH = 960
@@ -459,6 +460,7 @@ def camera_function(camera, source_rect):
     return camera
 
 def generate_world(world):
+    global coins_total
     y = 0
     for row in world:
         x = 0
@@ -476,40 +478,53 @@ def generate_world(world):
                 coin = Coin(x * tile_x, y * tile_y)
                 all_sprites.add(coin)
                 all_coins.add(coin)
+                coins_total += 1
             x += 1
         y += 1
     return start_pos
 
 # Show how much lives player has left.
-def draw_lives():
+def draw_HUD():
     global lives
     for i in range(lives):
         window.blit(pygame.image.load(
             os.path.join(assets,'heart.png')).convert_alpha(), (i * 20 + 4, 4))
-
+    window.blit(pygame.image.load(
+        os.path.join(assets, 'coin6.png')).convert_alpha(), (0, 16))
+    font = pygame.font.Font('freesansbold.ttf', 16)
+    text = font.render(
+        str(coins_total - len(all_coins)) + "/" + str(coins_total), True, WHITE)
+    window.blit(text, (32, 26))
+    
 def update_window(dt, camera):
     window.fill(backround_color)
     
     # Calls the update() method on all Sprites in the Group.
     all_sprites.update(dt)
-    
+
     # Render world.
     for sprite in all_sprites:
         window.blit(sprite.image, camera.apply(sprite))
     for tile in all_tiles:
         window.blit(tile.image, camera.apply(tile))
 
-    draw_lives()
+    draw_HUD()
     pygame.display.flip()
     
-def game_over(player):
+def game_over():
     global lives
     global shoot_count
+    global coins_total
     window.fill(BLACK)
     font = pygame.font.Font('freesansbold.ttf', 16)
     text = font.render("Game over  -  Press n for new game!", True, WHITE)
-    window.blit(text, (int(WIDTH / 2) - int(text.get_rect().width / 2), 256))
-    window.blit(player.images[0], (int(WIDTH / 2) - 16, 200))
+    text_rect = text.get_rect()
+    window_rect = window.get_rect()
+    text_rect.center = window_rect.center
+    window.blit(text, text_rect)
+    window.blit(pygame.image.load(
+        os.path.join(assets, 'robo0.png')).convert_alpha(),
+                 (int(WIDTH / 2) - tile_x//2, window_rect.centery - 2 * tile_y))
     pygame.display.flip()
     while True:
         clock.tick(FPS)
@@ -520,9 +535,11 @@ def game_over(player):
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
                 lives = reset_lives
                 shoot_count = reset_fire
+                coins_total = reset_coins
                 all_sprites.empty()
                 all_tiles.empty()
                 all_monsters.empty()
+                all_coins.empty()
                 return main()
     
 def main():
@@ -574,7 +591,7 @@ def main():
         # Game ends if player runs out of lives or drops out of map.
         global lives
         if lives <= 0 or player.rect.y > (len(world) * tile_y + 512):
-            game_over(player)
+            game_over()
             return
     
 if __name__ == '__main__':
@@ -598,7 +615,8 @@ if __name__ == '__main__':
         # Make groups for handling sprites.
         all_sprites = pygame.sprite.Group()
         all_tiles = pygame.sprite.Group()
-        # For handling interaction with monsters, monsters are also in all_sprites.
+        # Groups gor handling interactions,
+        # members of these groups will be added also to all_sprites.
         all_monsters = pygame.sprite.Group()
         all_coins = pygame.sprite.Group()
         
