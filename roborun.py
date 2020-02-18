@@ -73,7 +73,7 @@ world0 = [
 "                              ",
 "   C                          ",
 "                              ",
-"S          M                  ",
+"S       D  M                  ",
 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
 ]
 
@@ -104,14 +104,14 @@ world1 = [
 "                              ",
 "         CCCCCCCCC            ",
 "         CCCCCCCCC            ",
-"         CCCCCCCCC            ",
-"          P  P  P  P          ",
+"     D   CCCCCCCCC            ",
+"     P    P  P  P  P          ",
 ]
 
 world2 = [
 "           C       C    C    C",
-"                              ",
-"    C  C  PP    M  P    P    P",
+"           D                  ",
+"    C  C  PPP   M  P    P    P",
 "         PPPPPPPPPPP          ",
 "   PPPPPPP                    ",
 "  PP                          ",
@@ -136,12 +136,12 @@ world3 = [
 "             PPP        P    P    P    P                    ",
 "  PPPPP       P                                             ",
 " P     P                                 P   C              ",
-" P C C P                                                    ",
+" P P P P                                                    ",
 "P       P                                  P   C            ",
 "P P   P P                                                   ",
-"P  PPP  P     CCCC                           P              ",
-" P     P      CCCC                                          ",
-"  PPPPP       CCCC                             P            ",
+"P  PPP        CCCC                           P              ",
+" PD    P      CCCC                                          ",
+"  PPPPP   P   CCCC                             P            ",
 "              PPPP                         C                ",
 "                                             P              ",
 "                                                            ",
@@ -198,6 +198,7 @@ class Robot(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.winning = False
     
     def gravity(self, dt):
         if self.rect.bottom > self.ground and self.velocity_y >= 0:
@@ -274,6 +275,13 @@ class Robot(pygame.sprite.Sprite):
         colliding_coin = pygame.sprite.spritecollideany(self, all_coins)
         if colliding_coin is not None:
             colliding_coin.kill()
+        
+        colliding_door = pygame.sprite.spritecollideany(self, doors)
+        if colliding_door is not None:
+            if colliding_door.is_open and \
+            colliding_door.rect.collidepoint(self.rect.center):
+                self.winning = True
+                pygame.time.wait(2000)
         
         # Animating player movement.
         if self.velocity_x < 0:
@@ -428,6 +436,17 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x = x_location
         self.rect.y = y_location
 
+class Door(pygame.sprite.Sprite):
+    
+    def __init__(self, x_location, y_location):
+        pygame.sprite.Sprite.__init__(self)
+        self.is_open = False
+        self.image = pygame.image.load(
+            os.path.join(assets,'door.png')).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.x = x_location
+        self.rect.y = y_location
+
 # Class for implementing world scrolling.
 class Camera(object):
     def __init__(self, camera_function, world_width, world_height):
@@ -479,6 +498,9 @@ def generate_world(world):
                 all_sprites.add(coin)
                 all_coins.add(coin)
                 coins_total += 1
+            if element == "D": # D = Door
+                door = Door(x * tile_x, y * tile_y)
+                doors.add(door)
             x += 1
         y += 1
     return start_pos
@@ -495,19 +517,26 @@ def draw_HUD():
     text = font.render(
         str(coins_total - len(all_coins)) + "/" + str(coins_total), True, WHITE)
     window.blit(text, (32, 26))
-    
+
 def update_window(dt, camera):
     window.fill(backround_color)
     
     # Calls the update() method on all Sprites in the Group.
     all_sprites.update(dt)
-
+    
+    if len(all_coins) == 0:
+        for door in doors:
+            door.is_open = True
+    
     # Render world.
     for sprite in all_sprites:
         window.blit(sprite.image, camera.apply(sprite))
     for tile in all_tiles:
         window.blit(tile.image, camera.apply(tile))
-
+    for door in doors:
+        if door.is_open:
+            window.blit(door.image, camera.apply(door))
+    
     draw_HUD()
     pygame.display.flip()
     
@@ -543,6 +572,7 @@ def game_over():
                 return main()
     
 def main():
+    global world
     # Let there be light!
     start_pos = generate_world(world)
     
@@ -593,6 +623,18 @@ def main():
         if lives <= 0 or player.rect.y > (len(world) * tile_y + 512):
             game_over()
             return
+        
+        if player.winning:
+            lives = reset_lives
+            shoot_count = reset_fire
+            coins_total = reset_coins
+            all_sprites.empty()
+            all_tiles.empty()
+            all_monsters.empty()
+            all_coins.empty()
+            doors.empty()
+            world = world1
+            return main()
     
 if __name__ == '__main__':
     try:
@@ -619,6 +661,7 @@ if __name__ == '__main__':
         # members of these groups will be added also to all_sprites.
         all_monsters = pygame.sprite.Group()
         all_coins = pygame.sprite.Group()
+        doors = pygame.sprite.Group()
         
         main()
     except:
