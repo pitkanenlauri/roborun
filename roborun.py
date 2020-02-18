@@ -166,7 +166,7 @@ world3 = [
 ]
 
 # Choose which world to use.
-world = world3
+world = world0
 
 # Set ground level where player falls without platform.
 GROUND = len(world) * tile_y + 2048
@@ -600,6 +600,10 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if not player.jumping:
                     player.jump()
+                    double_jump = True
+                elif double_jump:
+                    player.jump()
+                    double_jump = False
             # Shoot fireballs when pressing right shift.
             elif event.type == pygame.KEYDOWN and (
                 event.key == pygame.K_RSHIFT or event.key == pygame.K_LSHIFT):
