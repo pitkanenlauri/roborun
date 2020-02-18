@@ -44,6 +44,7 @@ fireball_lifetime = 250 # def = 250
 fireball_speed = 250 # def = 250
 player_speed = 200 # def = 200
 player_jump_speed = 500 # How high player can jump. def = 500
+double_jump = False
 monster_speed = 70 # def = 70
 coins_total = 0
 reset_coins = coins_total
@@ -54,7 +55,7 @@ HEIGHT = 544
 window_size = [WIDTH, HEIGHT]
 
 # World templates for testing. 960x544 pixels = 30x17 tiles. (1 tile = 32x32 pixels)
-# P = Platform M = monster S = Spawn player C = Coin
+# P = Platform M = monster S = Spawn player C = Coin D = door
 # Choose which one to use from below or create your own. 
 # Hint: For convenience use insert to place P, M, S etc.
 world0 = [
@@ -574,6 +575,7 @@ def game_over():
     
 def main():
     global world
+    global double_jump
     # Let there be light!
     start_pos = generate_world(world)
     
@@ -629,6 +631,8 @@ def main():
             game_over()
             return
         
+        global shoot_count
+        global coins_total
         if player.winning:
             lives = reset_lives
             shoot_count = reset_fire
