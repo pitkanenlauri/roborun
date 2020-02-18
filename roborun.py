@@ -138,7 +138,7 @@ world3 = [
 " P     P                                 P   C              ",
 " P P P P                                                    ",
 "P       P                                  P   C            ",
-"P P   P P                                                   ",
+"P P   P                                                     ",
 "P  PPP        CCCC                           P              ",
 " PD    P      CCCC                                          ",
 "  PPPPP   P   CCCC                             P            ",
@@ -166,7 +166,7 @@ world3 = [
 ]
 
 # Choose which world to use.
-world = world2
+world = world3
 
 # Set ground level where player falls without platform.
 GROUND = len(world) * tile_y + 2048
@@ -569,6 +569,7 @@ def game_over():
                 all_tiles.empty()
                 all_monsters.empty()
                 all_coins.empty()
+                doors.empty()
                 return main()
     
 def main():
